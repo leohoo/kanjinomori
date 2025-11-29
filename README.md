@@ -23,7 +23,7 @@ This project was created as a father-son collaboration:
 - **Action Battle System** - Real-time Attack/Shield/Jump timing battles against bosses
 - **Coin Economy** - Earn coins for correct answers
 - **Shop System** - Buy weapons, costumes, and decorations
-- **Grade 1-6 Kanji** - Elementary school kanji (~130 characters)
+- **Grade 1-6 Kanji** - All 1,006 elementary school kanji (教育漢字)
 
 ### How to Play
 
@@ -66,7 +66,7 @@ flutter run
 - **アクションバトル** - アタック・シールド・ジャンプのタイミングバトル
 - **コインシステム** - 正解でコインを獲得
 - **ショップ** - 武器、衣装、装飾を購入
-- **小学1〜6年の漢字** - 約130文字収録
+- **小学1〜6年の漢字** - 教育漢字1,006文字を完全収録
 
 ### 遊び方
 
@@ -94,8 +94,20 @@ flutter run
 
 MIT
 
+## Data Sources
+
+Kanji data (`assets/data/kanji.json`) is compiled from official sources:
+
+| Data | Source |
+|------|--------|
+| Kanji list (1,006 字) | [MEXT 学習指導要領](https://www.mext.go.jp/a_menu/shotou/new-cs/youryou/syo/koku/001.htm) |
+| Readings & Meanings | [KANJIDIC2](http://www.edrdg.org/wiki/index.php/KANJIDIC_Project) by EDRDG |
+
+See [.dev/data/kanji-data-sources.md](.dev/data/kanji-data-sources.md) for details.
+
 ## Acknowledgments
 
 - Game concept created by my 8-year-old son
 - Specification written with [ChatGPT](https://chatgpt.com)
 - Implemented with [Claude Code](https://claude.ai/claude-code)
+- Kanji data from [EDRDG](http://www.edrdg.org/) (Electronic Dictionary Research and Development Group)

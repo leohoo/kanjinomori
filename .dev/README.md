@@ -8,7 +8,8 @@ This folder contains project management files for development tracking.
 .dev/
 ├── specs/      # Project specifications
 ├── tasks/      # Task descriptions and requirements
-└── reports/    # Progress reports and session logs
+├── reports/    # Progress reports and session logs
+└── data/       # Data source documentation
 ```
 
 ## Naming Convention
