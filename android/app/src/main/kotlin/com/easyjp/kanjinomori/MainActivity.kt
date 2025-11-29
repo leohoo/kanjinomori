@@ -1,4 +1,4 @@
-package com.kanjigame.kanji_game
+package com.easyjp.kanjinomori
 
 import io.flutter.embedding.android.FlutterActivity
 
