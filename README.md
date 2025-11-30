@@ -2,6 +2,15 @@
 
 A kanji learning game for kids, built with Flutter.
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/ios_home.png" alt="Home Screen" width="200">
+  <img src="screenshots/ios_stage_select.png" alt="Stage Selection" width="200">
+  <img src="screenshots/ios_quiz_reading.png" alt="Reading Quiz" width="200">
+  <img src="screenshots/ios_quiz_writing.png" alt="Writing Quiz" width="200">
+</p>
+
 ---
 
 ## English
