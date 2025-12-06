@@ -1,6 +1,37 @@
 import 'dart:math';
 import 'dart:ui';
 
+enum FailureReason {
+  strokeCount,
+  strokeOrder,
+  strokeShape,
+}
+
+class GradeResult {
+  final bool passed;
+  final FailureReason? failureReason;
+  final double distance;
+
+  const GradeResult({
+    required this.passed,
+    this.failureReason,
+    required this.distance,
+  });
+
+  String? get hintMessage {
+    switch (failureReason) {
+      case FailureReason.strokeCount:
+        return '画数を確認しよう';
+      case FailureReason.strokeOrder:
+        return '書き順を確認しよう';
+      case FailureReason.strokeShape:
+        return '形を確認しよう';
+      case null:
+        return null;
+    }
+  }
+}
+
 List<List<Offset>> _normalize(List<List<Offset>> strokes) {
   double minX = double.infinity, minY = double.infinity;
   double maxX = double.negativeInfinity, maxY = double.negativeInfinity;
@@ -72,32 +103,129 @@ double _strokeDistance(List<Offset> a, List<Offset> b) {
   return total / 32.0;
 }
 
-bool gradeWithStrokes({
+double _calculateOrderedDistance(
+  List<List<Offset>> user,
+  List<List<Offset>> template,
+) {
+  final pairCount = min(user.length, template.length);
+  if (pairCount == 0) return double.infinity;
+
+  var totalDistance = 0.0;
+  for (var i = 0; i < pairCount; i++) {
+    totalDistance += _strokeDistance(user[i], template[i]);
+  }
+  return totalDistance / pairCount;
+}
+
+double _calculateBestReorderedDistance(
+  List<List<Offset>> user,
+  List<List<Offset>> template,
+) {
+  if (user.isEmpty || template.isEmpty) return double.infinity;
+
+  final pairCount = min(user.length, template.length);
+  final usedTemplate = List.filled(template.length, false);
+  var totalDistance = 0.0;
+
+  for (var i = 0; i < pairCount; i++) {
+    var bestDist = double.infinity;
+    var bestIdx = -1;
+    for (var j = 0; j < template.length; j++) {
+      if (usedTemplate[j]) continue;
+      final dist = _strokeDistance(user[i], template[j]);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = j;
+      }
+    }
+    if (bestIdx >= 0) {
+      usedTemplate[bestIdx] = true;
+      totalDistance += bestDist;
+    }
+  }
+  return totalDistance / pairCount;
+}
+
+GradeResult gradeWithResult({
   required List<List<Offset>> userStrokes,
   required List<List<Offset>> templateStrokes,
   double distanceThreshold = 0.25,
   int strokeCountTolerance = 1,
 }) {
-  if (userStrokes.isEmpty) return false;
+  if (userStrokes.isEmpty) {
+    return const GradeResult(
+      passed: false,
+      failureReason: FailureReason.strokeCount,
+      distance: double.infinity,
+    );
+  }
 
   final normalizedUser = _normalize(userStrokes);
   final normalizedTemplate = _normalize(templateStrokes);
 
   final countDiff =
       (normalizedUser.length - normalizedTemplate.length).abs();
-  if (countDiff > strokeCountTolerance) {
-    return false;
-  }
 
-  final pairCount = min(normalizedUser.length, normalizedTemplate.length);
-  var totalDistance = 0.0;
-  for (var i = 0; i < pairCount; i++) {
-    totalDistance += _strokeDistance(
-      normalizedUser[i],
-      normalizedTemplate[i],
+  // 1. Check stroke count first
+  if (countDiff > strokeCountTolerance) {
+    return GradeResult(
+      passed: false,
+      failureReason: FailureReason.strokeCount,
+      distance: double.infinity,
     );
   }
-  final averageDistance = totalDistance / pairCount;
+
+  final orderedDistance = _calculateOrderedDistance(
+    normalizedUser,
+    normalizedTemplate,
+  );
   final penalty = 0.05 * countDiff;
-  return (averageDistance + penalty) < distanceThreshold;
+  final finalDistance = orderedDistance + penalty;
+
+  // Check if passed
+  if (finalDistance < distanceThreshold) {
+    return GradeResult(
+      passed: true,
+      distance: finalDistance,
+    );
+  }
+
+  // 2. Check stroke order (only if stroke count is acceptable)
+  if (countDiff == 0) {
+    final reorderedDistance = _calculateBestReorderedDistance(
+      normalizedUser,
+      normalizedTemplate,
+    );
+
+    // If reordering significantly improves the score, it's a stroke order issue
+    if (reorderedDistance < orderedDistance * 0.7 &&
+        reorderedDistance < distanceThreshold) {
+      return GradeResult(
+        passed: false,
+        failureReason: FailureReason.strokeOrder,
+        distance: orderedDistance,
+      );
+    }
+  }
+
+  // 3. Otherwise it's a shape issue
+  return GradeResult(
+    passed: false,
+    failureReason: FailureReason.strokeShape,
+    distance: finalDistance,
+  );
+}
+
+bool gradeWithStrokes({
+  required List<List<Offset>> userStrokes,
+  required List<List<Offset>> templateStrokes,
+  double distanceThreshold = 0.25,
+  int strokeCountTolerance = 1,
+}) {
+  return gradeWithResult(
+    userStrokes: userStrokes,
+    templateStrokes: templateStrokes,
+    distanceThreshold: distanceThreshold,
+    strokeCountTolerance: strokeCountTolerance,
+  ).passed;
 }

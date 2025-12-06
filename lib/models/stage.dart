@@ -130,6 +130,7 @@ class StageProgress {
   int correctAnswers;
   int coinsEarned;
   List<bool> answersCorrect;
+  int currentAttempt; // 1, 2, or 3
 
   StageProgress({
     required this.stageId,
@@ -138,6 +139,7 @@ class StageProgress {
     this.correctAnswers = 0,
     this.coinsEarned = 0,
     List<bool>? answersCorrect,
+    this.currentAttempt = 1,
   }) : answersCorrect = answersCorrect ?? [];
 
   KanjiQuestion get currentQuestion => questions[currentQuestionIndex];
@@ -148,13 +150,41 @@ class StageProgress {
 
   int get totalPossibleCoins => questions.length * 5 + 10; // 5 per question + 10 bonus
 
+  /// Get coin reward based on attempt number
+  int get coinRewardForCurrentAttempt {
+    switch (currentAttempt) {
+      case 1:
+        return 5;
+      case 2:
+        return 3;
+      case 3:
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  /// Check if retry is available (max 3 attempts)
+  bool get canRetry => currentAttempt < 3;
+
+  /// Check if in trace mode (3rd attempt)
+  bool get isTraceMode => currentAttempt == 3;
+
+  /// Increment attempt count for retry
+  void incrementAttempt() {
+    if (currentAttempt < 3) {
+      currentAttempt++;
+    }
+  }
+
   void answerQuestion(bool correct) {
     answersCorrect.add(correct);
     if (correct) {
       correctAnswers++;
-      coinsEarned += 5;
+      coinsEarned += coinRewardForCurrentAttempt;
     }
     currentQuestionIndex++;
+    currentAttempt = 1; // Reset attempt for next question
 
     // Add bonus for perfect score
     if (isComplete && isPerfect) {
@@ -167,5 +197,6 @@ class StageProgress {
     correctAnswers = 0;
     coinsEarned = 0;
     answersCorrect.clear();
+    currentAttempt = 1;
   }
 }
