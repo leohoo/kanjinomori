@@ -52,11 +52,13 @@ class _TraceAlongOverlayState extends State<TraceAlongOverlay>
 
   List<Offset> _normalizeStroke(List<Offset> stroke) {
     // Normalize stroke to canvas coordinates
-    // Template strokes are in 0-109 range, convert to canvas size
+    // Template strokes are in 0-1 range, convert to canvas size with 10% margin
+    final margin = widget.size * 0.1;
+    final usableSize = widget.size * 0.8;
     return stroke.map((p) {
       return Offset(
-        p.dx / 109 * widget.size,
-        p.dy / 109 * widget.size,
+        p.dx * usableSize + margin,
+        p.dy * usableSize + margin,
       );
     }).toList();
   }
@@ -64,7 +66,7 @@ class _TraceAlongOverlayState extends State<TraceAlongOverlay>
   Offset? get _guidePoint {
     if (_currentTemplateStroke.isEmpty) return null;
     final progress = _guideAnimation.value;
-    final index = (progress * (_currentTemplateStroke.length - 1)).floor();
+    final index = (progress * (_currentTemplateStroke.length - 1)).round();
     return _currentTemplateStroke[index.clamp(0, _currentTemplateStroke.length - 1)];
   }
 

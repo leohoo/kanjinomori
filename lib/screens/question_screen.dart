@@ -297,7 +297,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.accent,
-                                      foregroundColor: AppColors.accentDark,
+                                      foregroundColor: Colors.black87,
                                     ),
                                   ),
                                 ],
@@ -483,6 +483,21 @@ class _WritingQuestion extends ConsumerStatefulWidget {
 
 class _WritingQuestionState extends ConsumerState<_WritingQuestion> {
   final _canvasKey = GlobalKey<KanjiCanvasState>();
+  bool _hasStrokes = false;
+
+  @override
+  void didUpdateWidget(covariant _WritingQuestion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.attemptNumber != widget.attemptNumber) {
+      _hasStrokes = false;
+    }
+  }
+
+  void _onCanvasChanged() {
+    setState(() {
+      _hasStrokes = _canvasKey.currentState?.hasStrokes ?? false;
+    });
+  }
 
   void _checkAnswer() {
     final canvasState = _canvasKey.currentState;
@@ -589,6 +604,7 @@ class _WritingQuestionState extends ConsumerState<_WritingQuestion> {
                   key: _canvasKey,
                   size: canvasSize,
                   strokeWidth: 8.0,
+                  onChanged: _onCanvasChanged,
                 );
               },
             ),
@@ -607,12 +623,12 @@ class _WritingQuestionState extends ConsumerState<_WritingQuestion> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
-                  onPressed: _checkAnswer,
+                  onPressed: _hasStrokes ? _checkAnswer : null,
                   icon: const Icon(Icons.check),
                   label: const Text('確認'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.accentDark,
+                    foregroundColor: Colors.black87,
                   ),
                 ),
               ],

@@ -5,12 +5,14 @@ class KanjiCanvas extends StatefulWidget {
   final double size;
   final Color strokeColor;
   final double strokeWidth;
+  final VoidCallback? onChanged;
 
   const KanjiCanvas({
     super.key,
     this.size = 200,
     this.strokeColor = AppColors.textPrimary,
     this.strokeWidth = 6.0,
+    this.onChanged,
   });
 
   @override
@@ -28,6 +30,7 @@ class KanjiCanvasState extends State<KanjiCanvas> {
       _strokes.clear();
       _currentStroke = [];
     });
+    widget.onChanged?.call();
   }
 
   List<List<Offset>> getStrokes() =>
@@ -52,6 +55,7 @@ class KanjiCanvasState extends State<KanjiCanvas> {
       }
       _currentStroke = [];
     });
+    widget.onChanged?.call();
   }
 
   @override
