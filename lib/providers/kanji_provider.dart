@@ -27,7 +27,7 @@ class KanjiRepository {
     if (_strokeTemplates.isNotEmpty) return;
 
     try {
-      final jsonString = await rootBundle.loadString('assets/data/kanjivg_strokes.json');
+      final jsonString = await rootBundle.loadString('assets/data/kyouiku_strokes.json');
       final Map<String, dynamic> decoded = json.decode(jsonString);
       _strokeTemplates = decoded.map((kanji, strokes) {
         final parsedStrokes = (strokes as List)

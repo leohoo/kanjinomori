@@ -1,4 +1,4 @@
 KanjiVG
 Source: https://kanjivg.tagaini.net/
 License: Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)
-Note: Stroke data in assets/data/kanjivg_strokes.json is derived from KanjiVG.
+Note: Stroke data in assets/data/kyouiku_strokes.json is derived from KanjiVG.
