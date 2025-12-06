@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/kanji.dart';
 import '../providers/providers.dart';
 import '../utils/constants.dart';
+import '../utils/stroke_grader.dart';
 import '../widgets/kanji_canvas.dart';
 
 class QuestionScreen extends ConsumerStatefulWidget {
@@ -357,7 +358,7 @@ class _ReadingQuestion extends StatelessWidget {
   }
 }
 
-class _WritingQuestion extends StatefulWidget {
+class _WritingQuestion extends ConsumerStatefulWidget {
   final KanjiQuestion question;
   final bool answered;
   final bool isCorrect;
@@ -371,20 +372,27 @@ class _WritingQuestion extends StatefulWidget {
   });
 
   @override
-  State<_WritingQuestion> createState() => _WritingQuestionState();
+  ConsumerState<_WritingQuestion> createState() => _WritingQuestionState();
 }
 
-class _WritingQuestionState extends State<_WritingQuestion> {
+class _WritingQuestionState extends ConsumerState<_WritingQuestion> {
   final _canvasKey = GlobalKey<KanjiCanvasState>();
 
   void _checkAnswer() {
-    // For now, we'll use a simple pass - in a real app, you'd use
-    // stroke recognition or ML to validate the kanji
-    // For demo purposes, we'll auto-pass if user draws something
-    final hasDrawn = _canvasKey.currentState?.hasStrokes ?? false;
+    final canvasState = _canvasKey.currentState;
+    final hasDrawn = canvasState?.hasStrokes ?? false;
+    final drawnStrokes = canvasState?.getStrokes() ?? <List<Offset>>[];
 
-    // Simplified: 50% chance to be correct if drawn, always wrong if empty
-    final isCorrect = hasDrawn && (DateTime.now().millisecond % 2 == 0);
+    final kanjiRepo = ref.read(kanjiRepositoryProvider);
+    final template =
+        kanjiRepo.getStrokeTemplate(widget.question.kanji.kanji);
+
+    final isCorrect = template != null
+        ? gradeWithStrokes(
+            userStrokes: drawnStrokes,
+            templateStrokes: template,
+          )
+        : hasDrawn;
 
     widget.onAnswer(isCorrect, widget.question.kanji.kanji);
   }

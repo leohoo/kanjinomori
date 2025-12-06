@@ -63,6 +63,7 @@ class GameNotifier extends StateNotifier<GameState> {
     // Generate questions for this stage
     final kanjiRepo = _ref.read(kanjiRepositoryProvider);
     await kanjiRepo.loadKanji();
+    await kanjiRepo.loadStrokes();
     final questions = kanjiRepo.generateQuestions(stage.grade, stage.questionCount);
 
     final progress = StageProgress(

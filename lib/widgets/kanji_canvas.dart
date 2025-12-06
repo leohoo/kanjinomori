@@ -30,7 +30,8 @@ class KanjiCanvasState extends State<KanjiCanvas> {
     });
   }
 
-  List<List<Offset>> getStrokes() => List.from(_strokes);
+  List<List<Offset>> getStrokes() =>
+      _strokes.map((stroke) => List<Offset>.from(stroke)).toList();
 
   void _onPanStart(DragStartDetails details) {
     setState(() {

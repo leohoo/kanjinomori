@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/kanji.dart';
 
 class KanjiRepository {
   List<Kanji> _allKanji = [];
+  Map<String, List<List<Offset>>> _strokeTemplates = {};
   final Random _random = Random();
 
   Future<void> loadKanji() async {
@@ -19,6 +21,32 @@ class KanjiRepository {
       // If file doesn't exist yet, use sample data
       _allKanji = _getSampleKanji();
     }
+  }
+
+  Future<void> loadStrokes() async {
+    if (_strokeTemplates.isNotEmpty) return;
+
+    try {
+      final jsonString = await rootBundle.loadString('assets/data/kanjivg_strokes.json');
+      final Map<String, dynamic> decoded = json.decode(jsonString);
+      _strokeTemplates = decoded.map((kanji, strokes) {
+        final parsedStrokes = (strokes as List)
+            .map((stroke) => (stroke as List)
+                .map((point) => Offset(
+                      (point[0] as num).toDouble(),
+                      (point[1] as num).toDouble(),
+                    ))
+                .toList())
+            .toList();
+        return MapEntry(kanji, parsedStrokes);
+      });
+    } catch (_) {
+      _strokeTemplates = {};
+    }
+  }
+
+  List<List<Offset>>? getStrokeTemplate(String kanji) {
+    return _strokeTemplates[kanji];
   }
 
   List<Kanji> getKanjiByGrade(int grade) {
@@ -272,4 +300,5 @@ final kanjiRepositoryProvider = Provider<KanjiRepository>((ref) {
 final kanjiLoadedProvider = FutureProvider<void>((ref) async {
   final repo = ref.watch(kanjiRepositoryProvider);
   await repo.loadKanji();
+  await repo.loadStrokes();
 });
