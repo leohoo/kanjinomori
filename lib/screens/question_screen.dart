@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/kanji.dart';
 import '../providers/providers.dart';
 import '../utils/constants.dart';
+import '../utils/stroke_grader.dart';
 import '../widgets/kanji_canvas.dart';
+import '../widgets/stroke_hint_banner.dart';
+import '../widgets/trace_along_overlay.dart';
 
 class QuestionScreen extends ConsumerStatefulWidget {
   const QuestionScreen({super.key});
@@ -17,6 +20,8 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
   bool _answered = false;
   bool _isCorrect = false;
   String? _selectedAnswer;
+  FailureReason? _failureReason;
+  bool _showRetryOption = false;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
 
@@ -39,6 +44,61 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
     super.dispose();
   }
 
+  void _handleWritingAnswer(bool correct, String answer, FailureReason? failureReason) {
+    if (_answered) return;
+
+    final progress = ref.read(gameProvider).stageProgress;
+    final canRetry = progress?.canRetry ?? false;
+
+    setState(() {
+      _answered = true;
+      _isCorrect = correct;
+      _selectedAnswer = answer;
+      _failureReason = failureReason;
+      _showRetryOption = !correct && canRetry;
+    });
+
+    _animController.forward();
+
+    // If correct or no retry available, proceed after delay
+    if (correct || !canRetry) {
+      Future.delayed(
+        correct
+            ? AppDurations.correctAnswerCelebration
+            : AppDurations.wrongAnswerFeedback,
+        () {
+          if (mounted) {
+            ref.read(gameProvider.notifier).answerQuestion(correct);
+            _resetState();
+          }
+        },
+      );
+    }
+    // Otherwise, wait for user to tap retry or give up
+  }
+
+  void _handleRetry() {
+    final progress = ref.read(gameProvider).stageProgress;
+    progress?.incrementAttempt();
+    _resetState();
+  }
+
+  void _handleGiveUp() {
+    ref.read(gameProvider.notifier).answerQuestion(false);
+    _resetState();
+  }
+
+  void _resetState() {
+    setState(() {
+      _answered = false;
+      _isCorrect = false;
+      _selectedAnswer = null;
+      _failureReason = null;
+      _showRetryOption = false;
+    });
+    _animController.reset();
+  }
+
   void _handleAnswer(bool correct, String answer) {
     if (_answered) return;
 
@@ -58,13 +118,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
       () {
         if (mounted) {
           ref.read(gameProvider.notifier).answerQuestion(correct);
-          // Reset state for next question
-          setState(() {
-            _answered = false;
-            _isCorrect = false;
-            _selectedAnswer = null;
-          });
-          _animController.reset();
+          _resetState();
         }
       },
     );
@@ -144,7 +198,8 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
                   question: question,
                   answered: _answered,
                   isCorrect: _isCorrect,
-                  onAnswer: _handleAnswer,
+                  attemptNumber: progress.currentAttempt,
+                  onAnswer: _handleWritingAnswer,
                 ),
 
               const Spacer(),
@@ -154,6 +209,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
                 AnimatedBuilder(
                   animation: _scaleAnimation,
                   builder: (context, child) {
+                    final coinReward = progress.coinRewardForCurrentAttempt;
                     return Transform.scale(
                       scale: _scaleAnimation.value,
                       child: Container(
@@ -181,14 +237,14 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              _isCorrect ? '正解！ +5コイン' : '残念...',
+                              _isCorrect ? '正解！ +$coinRewardコイン' : '残念...',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: _isCorrect ? AppColors.success : AppColors.error,
                               ),
                             ),
-                            if (!_isCorrect) ...[
+                            if (!_isCorrect && !_showRetryOption) ...[
                               const SizedBox(height: 4),
                               Text(
                                 '正解: ${question.correctAnswer}',
@@ -196,6 +252,55 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen>
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                 ),
+                              ),
+                            ],
+                            // Show hint for 2nd attempt
+                            if (_showRetryOption && _failureReason != null && progress.currentAttempt == 1) ...[
+                              const SizedBox(height: 12),
+                              StrokeHintBanner(failureReason: _failureReason!),
+                            ],
+                            // Retry options
+                            if (_showRetryOption) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                progress.currentAttempt == 1
+                                    ? 'もう一度挑戦しますか？'
+                                    : 'なぞり書きで練習しますか？',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: _handleGiveUp,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.textSecondary,
+                                    ),
+                                    child: const Text('あきらめる'),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton.icon(
+                                    onPressed: _handleRetry,
+                                    icon: Icon(
+                                      progress.currentAttempt == 1
+                                          ? Icons.refresh
+                                          : Icons.gesture,
+                                    ),
+                                    label: Text(
+                                      progress.currentAttempt == 1
+                                          ? 'もう一度 (${progress.coinRewardForCurrentAttempt - 2}コイン)'
+                                          : 'なぞり書き (1コイン)',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.accent,
+                                      foregroundColor: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ],
@@ -357,40 +462,74 @@ class _ReadingQuestion extends StatelessWidget {
   }
 }
 
-class _WritingQuestion extends StatefulWidget {
+class _WritingQuestion extends ConsumerStatefulWidget {
   final KanjiQuestion question;
   final bool answered;
   final bool isCorrect;
-  final void Function(bool, String) onAnswer;
+  final int attemptNumber;
+  final void Function(bool, String, FailureReason?) onAnswer;
 
   const _WritingQuestion({
     required this.question,
     required this.answered,
     required this.isCorrect,
+    required this.attemptNumber,
     required this.onAnswer,
   });
 
   @override
-  State<_WritingQuestion> createState() => _WritingQuestionState();
+  ConsumerState<_WritingQuestion> createState() => _WritingQuestionState();
 }
 
-class _WritingQuestionState extends State<_WritingQuestion> {
+class _WritingQuestionState extends ConsumerState<_WritingQuestion> {
   final _canvasKey = GlobalKey<KanjiCanvasState>();
+  bool _hasStrokes = false;
+
+  @override
+  void didUpdateWidget(covariant _WritingQuestion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.attemptNumber != widget.attemptNumber) {
+      _hasStrokes = false;
+    }
+  }
+
+  void _onCanvasChanged() {
+    setState(() {
+      _hasStrokes = _canvasKey.currentState?.hasStrokes ?? false;
+    });
+  }
 
   void _checkAnswer() {
-    // For now, we'll use a simple pass - in a real app, you'd use
-    // stroke recognition or ML to validate the kanji
-    // For demo purposes, we'll auto-pass if user draws something
-    final hasDrawn = _canvasKey.currentState?.hasStrokes ?? false;
+    final canvasState = _canvasKey.currentState;
+    final hasDrawn = canvasState?.hasStrokes ?? false;
+    final drawnStrokes = canvasState?.getStrokes() ?? <List<Offset>>[];
 
-    // Simplified: 50% chance to be correct if drawn, always wrong if empty
-    final isCorrect = hasDrawn && (DateTime.now().millisecond % 2 == 0);
+    final kanjiRepo = ref.read(kanjiRepositoryProvider);
+    final template =
+        kanjiRepo.getStrokeTemplate(widget.question.kanji.kanji);
 
-    widget.onAnswer(isCorrect, widget.question.kanji.kanji);
+    if (template != null) {
+      final result = gradeWithResult(
+        userStrokes: drawnStrokes,
+        templateStrokes: template,
+      );
+      widget.onAnswer(result.passed, widget.question.kanji.kanji, result.failureReason);
+    } else {
+      // Fallback if no template
+      widget.onAnswer(hasDrawn, widget.question.kanji.kanji, null);
+    }
+  }
+
+  void _handleTraceComplete(bool success) {
+    widget.onAnswer(success, widget.question.kanji.kanji, null);
   }
 
   @override
   Widget build(BuildContext context) {
+    final kanjiRepo = ref.watch(kanjiRepositoryProvider);
+    final template = kanjiRepo.getStrokeTemplate(widget.question.kanji.kanji);
+    final isTraceMode = widget.attemptNumber == 3 && template != null;
+
     return Column(
       children: [
         // Reading/meaning prompt
@@ -432,50 +571,69 @@ class _WritingQuestionState extends State<_WritingQuestion> {
 
         // Canvas for writing
         if (!widget.answered) ...[
-          const Text(
-            'この漢字を書いてください',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
+          if (isTraceMode) ...[
+            // Trace mode (3rd attempt)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
+                return TraceAlongOverlay(
+                  templateStrokes: template,
+                  size: canvasSize,
+                  onComplete: _handleTraceComplete,
+                );
+              },
             ),
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
-              return KanjiCanvas(
-                key: _canvasKey,
-                size: canvasSize,
-                strokeWidth: 8.0,
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => _canvasKey.currentState?.clear(),
-                icon: const Icon(Icons.refresh),
-                label: const Text('やり直し'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
-                ),
+          ] else ...[
+            // Normal writing mode (1st or 2nd attempt)
+            Text(
+              widget.attemptNumber == 1
+                  ? 'この漢字を書いてください'
+                  : 'もう一度書いてみよう',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
               ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: _checkAnswer,
-                icon: const Icon(Icons.check),
-                label: const Text('確認'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: AppColors.accentDark,
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
+                return KanjiCanvas(
+                  key: _canvasKey,
+                  size: canvasSize,
+                  strokeWidth: 8.0,
+                  onChanged: _onCanvasChanged,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _canvasKey.currentState?.clear(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('やり直し'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: _hasStrokes ? _checkAnswer : null,
+                  icon: const Icon(Icons.check),
+                  label: const Text('確認'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ] else ...[
           // Show correct answer
           Container(
