@@ -20,7 +20,6 @@ class _BorderedCircle extends CircleComponent {
           paint: Paint()
             ..color = fillColor
             ..style = PaintingStyle.fill,
-          anchor: Anchor.center,
         );
 
   final Paint _borderPaint;
