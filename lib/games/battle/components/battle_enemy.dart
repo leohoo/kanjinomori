@@ -3,6 +3,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
+import '../../effects/particle_effect.dart';
 
 /// Enemy AI states
 enum EnemyState {
@@ -351,12 +352,22 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
   }
 
   /// Take damage
-  void takeDamage(int damage) {
+  void takeDamage(int damage, {bool isCritical = false}) {
     if (isInvincible) return;
 
     hp -= damage;
     isInvincible = true;
     invincibilityTimer = 0.2;
+
+    // Spawn damage flash effect
+    parent?.add(DamageFlashEffect(position: position.clone(), flashSize: size.clone()));
+
+    // Spawn critical hit effect if applicable
+    if (isCritical) {
+      parent?.add(CriticalHitEffect(
+        position: Vector2(position.x, position.y - size.y * 0.5),
+      ));
+    }
 
     // Knockback
     velocity.x = facingRight

@@ -3,6 +3,10 @@
 // Shared components
 export 'components/joystick_component.dart';
 
+// Effects (Phase 4)
+export 'effects/particle_effect.dart';
+export 'effects/screen_transition.dart';
+
 // Field exploration (Phase 2)
 export 'field/field_game.dart';
 export 'field/field_screen.dart';
