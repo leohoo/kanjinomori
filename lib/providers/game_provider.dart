@@ -3,7 +3,17 @@ import '../models/models.dart';
 import 'kanji_provider.dart';
 import 'player_provider.dart';
 
-enum GameScreen { home, stageSelect, stage, question, battle, victory, defeat, shop }
+enum GameScreen {
+  home,
+  stageSelect,
+  stage,      // Legacy turn-based stage
+  field,      // New 2.5D field exploration
+  question,
+  battle,
+  victory,
+  defeat,
+  shop,
+}
 
 class GameState {
   final GameScreen currentScreen;
@@ -77,6 +87,58 @@ class GameNotifier extends StateNotifier<GameState> {
       stageProgress: progress,
       isLoading: false,
     );
+  }
+
+  /// Start a stage with the new 2.5D field exploration mode.
+  Future<void> startFieldStage(int stageId) async {
+    final stage = Stage.getStage(stageId);
+    if (stage == null) return;
+
+    state = state.copyWith(isLoading: true);
+
+    // Generate questions for this stage
+    final kanjiRepo = _ref.read(kanjiRepositoryProvider);
+    await kanjiRepo.loadKanji();
+    await kanjiRepo.loadStrokes();
+    final questions = kanjiRepo.generateQuestions(stage.grade, stage.questionCount);
+
+    final progress = StageProgress(
+      stageId: stageId,
+      questions: questions,
+    );
+
+    state = GameState(
+      currentScreen: GameScreen.field,
+      currentStage: stage,
+      stageProgress: progress,
+      isLoading: false,
+    );
+  }
+
+  /// Handle field stage completion
+  void completeFieldStage(bool victory, int coinsEarned) {
+    final stage = state.currentStage;
+    if (stage == null) return;
+
+    if (victory) {
+      final playerNotifier = _ref.read(playerProvider.notifier);
+      playerNotifier.addCoins(coinsEarned);
+      playerNotifier.updateHighScore(stage.id, coinsEarned);
+
+      // Unlock next stage
+      if (stage.id < Stage.allStages.length) {
+        playerNotifier.unlockStage(stage.id + 1);
+      }
+
+      state = state.copyWith(currentScreen: GameScreen.victory);
+    } else {
+      // Give partial coins on defeat
+      if (coinsEarned > 0) {
+        final playerNotifier = _ref.read(playerProvider.notifier);
+        playerNotifier.addCoins(coinsEarned ~/ 2);
+      }
+      state = state.copyWith(currentScreen: GameScreen.defeat);
+    }
   }
 
   void startQuestion() {
