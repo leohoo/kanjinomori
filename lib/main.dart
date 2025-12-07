@@ -51,7 +51,8 @@ class KanjiGameApp extends StatelessWidget {
           seedColor: AppColors.primary,
           brightness: Brightness.light,
         ),
-        fontFamily: 'NotoSansJP',
+        // Use system default fonts for proper kanji support
+        // fontFamily: 'NotoSansJP',
       ),
       home: const GameNavigator(),
     );
