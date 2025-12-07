@@ -57,39 +57,55 @@ class DoorComponent extends PositionComponent with CollisionCallbacks, HasGameRe
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load portal spritesheet
-    // portal1.png has animated frames in a grid layout
-    final portalSheet = await game.images.load('sprites/door/portal1.png');
+    // Try to load portal sprites, fall back to placeholder if not available
+    try {
+      // Load portal spritesheet
+      // portal1.png has animated frames in a grid layout
+      final portalSheet = await game.images.load('sprites/door/portal1.png');
 
-    // The portal sprite sheet appears to have multiple frames
-    // Create animation from the frames
-    const frameWidth = 64.0;
-    const frameHeight = 64.0;
-    const columns = 4;
-    const rows = 4;
+      // The portal sprite sheet appears to have multiple frames
+      // Create animation from the frames
+      const frameWidth = 64.0;
+      const frameHeight = 64.0;
+      const columns = 4;
+      const rows = 4;
 
-    final portalFrames = <Sprite>[];
-    for (var row = 0; row < rows; row++) {
-      for (var col = 0; col < columns; col++) {
-        portalFrames.add(Sprite(
-          portalSheet,
-          srcPosition: Vector2(col * frameWidth, row * frameHeight),
-          srcSize: Vector2(frameWidth, frameHeight),
-        ));
+      final portalFrames = <Sprite>[];
+      for (var row = 0; row < rows; row++) {
+        for (var col = 0; col < columns; col++) {
+          portalFrames.add(Sprite(
+            portalSheet,
+            srcPosition: Vector2(col * frameWidth, row * frameHeight),
+            srcSize: Vector2(frameWidth, frameHeight),
+          ));
+        }
       }
+
+      final portalAnimation = SpriteAnimation.spriteList(
+        portalFrames,
+        stepTime: 0.1,
+      );
+
+      _portalAnimation = SpriteAnimationComponent(
+        animation: portalAnimation,
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
+      add(_portalAnimation!);
+    } catch (e) {
+      // Fall back to placeholder rectangles (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.secondary,
+        anchor: Anchor.bottomCenter,
+      ));
+      add(RectangleComponent(
+        size: Vector2(size.x * 0.8, size.y * 0.9),
+        position: Vector2(size.x * 0.1, 0),
+        paint: Paint()..color = AppColors.secondaryDark,
+        anchor: Anchor.topLeft,
+      ));
     }
-
-    final portalAnimation = SpriteAnimation.spriteList(
-      portalFrames,
-      stepTime: 0.1,
-    );
-
-    _portalAnimation = SpriteAnimationComponent(
-      animation: portalAnimation,
-      size: size,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_portalAnimation!);
 
     // Glow effect (only visible when available)
     _glowEffect = CircleComponent(

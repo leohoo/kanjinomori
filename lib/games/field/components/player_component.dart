@@ -1,5 +1,6 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
 import 'door_component.dart';
 
@@ -64,44 +65,54 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load runner spritesheet
-    // The spritesheet has: RUN (6 frames), JUMP (2+2 frames), RUN_AND_SHOOT (6 frames)
-    // Frame size is approximately 100x100
-    final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+    // Try to load sprites, fall back to placeholder if not available
+    try {
+      // Load runner spritesheet
+      // The spritesheet has: RUN (6 frames), JUMP (2+2 frames), RUN_AND_SHOOT (6 frames)
+      // Frame size is approximately 100x100
+      final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
 
-    // Create run animation from first row (6 frames, ~100x100 each)
-    // Adjust these values based on actual sprite dimensions
-    const frameWidth = 100.0;
-    const frameHeight = 100.0;
+      // Create run animation from first row (6 frames, ~100x100 each)
+      // Adjust these values based on actual sprite dimensions
+      const frameWidth = 100.0;
+      const frameHeight = 100.0;
 
-    final runFrames = List.generate(6, (i) {
-      return Sprite(
-        spriteSheet,
-        srcPosition: Vector2(i * frameWidth, 0),
-        srcSize: Vector2(frameWidth, frameHeight),
+      final runFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 0),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      final runSpriteAnimation = SpriteAnimation.spriteList(
+        runFrames,
+        stepTime: 0.1,
       );
-    });
 
-    final runSpriteAnimation = SpriteAnimation.spriteList(
-      runFrames,
-      stepTime: 0.1,
-    );
+      _runAnimation = SpriteAnimationComponent(
+        animation: runSpriteAnimation,
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
 
-    _runAnimation = SpriteAnimationComponent(
-      animation: runSpriteAnimation,
-      size: size,
-      anchor: Anchor.bottomCenter,
-    );
+      // Use first frame as idle
+      _idleSprite = SpriteComponent(
+        sprite: runFrames[0],
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
 
-    // Use first frame as idle
-    _idleSprite = SpriteComponent(
-      sprite: runFrames[0],
-      size: size,
-      anchor: Anchor.bottomCenter,
-    );
-
-    // Start with idle
-    add(_idleSprite!);
+      // Start with idle
+      add(_idleSprite!);
+    } catch (e) {
+      // Fall back to placeholder rectangle (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.primary,
+        anchor: Anchor.bottomCenter,
+      ));
+    }
 
     // Add hitbox for collision detection
     add(
