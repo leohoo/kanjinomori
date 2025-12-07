@@ -21,3 +21,7 @@ export 'battle/components/battle_player.dart';
 export 'battle/components/battle_enemy.dart';
 export 'battle/components/battle_hud.dart';
 export 'battle/systems/combat_system.dart';
+
+// Integration (Phase 5)
+export 'coordinator/game_coordinator.dart';
+export 'coordinator/stage_coordinator_screen.dart';
