@@ -77,6 +77,9 @@ class BattleGame extends FlameGame with HasCollisionDetection {
   Future<void> onLoad() async {
     await super.onLoad();
 
+    // Set custom asset prefix (default is 'assets/images/')
+    images.prefix = 'assets/';
+
     // Setup arena
     groundY = size.y * 0.8;
     leftBound = 50;

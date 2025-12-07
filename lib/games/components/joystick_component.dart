@@ -78,8 +78,10 @@ class SpriteJoystick extends JoystickComponent {
 
     try {
       // Load sprite assets (JoystickComponent already has HasGameReference)
-      final baseSprite = await game.loadSprite('ui/joystick_base.png');
-      final knobSprite = await game.loadSprite('ui/joystick_knob.png');
+      final baseImage = await game.images.load('ui/joystick_base.png');
+      final knobImage = await game.images.load('ui/joystick_knob.png');
+      final baseSprite = Sprite(baseImage);
+      final knobSprite = Sprite(knobImage);
 
       // Replace background with sprite
       background?.removeFromParent();
