@@ -8,5 +8,9 @@ export 'components/joystick_component.dart';
 // export 'field/field_screen.dart';
 
 // Battle system (Phase 3)
-// export 'battle/battle_game.dart';
-// export 'battle/battle_screen.dart';
+export 'battle/battle_game.dart';
+export 'battle/battle_screen.dart';
+export 'battle/components/battle_player.dart';
+export 'battle/components/battle_enemy.dart';
+export 'battle/components/battle_hud.dart';
+export 'battle/systems/combat_system.dart';
