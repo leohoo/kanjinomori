@@ -56,7 +56,7 @@ class BattleGame extends FlameGame with HasCollisionDetection {
   late BattlePlayer player;
   late BattleEnemy enemy;
   late BattleHud hud;
-  late GameJoystick joystick;
+  late SpriteJoystick joystick;
   late ActionButton jumpButton;
   late ActionButton attackButton;
   late ActionButton shieldButton;
@@ -131,7 +131,7 @@ class BattleGame extends FlameGame with HasCollisionDetection {
 
   void _setupControls(Component viewport) {
     // Joystick (bottom-left)
-    joystick = GameJoystick(
+    joystick = SpriteJoystick(
       position: Vector2(
         GameSizes.joystickSize / 2 + 20,
         size.y - GameSizes.joystickSize / 2 - 20,
