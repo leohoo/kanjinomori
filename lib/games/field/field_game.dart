@@ -44,9 +44,6 @@ class FieldGame extends FlameGame with HasCollisionDetection {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Set custom asset prefix (default is 'assets/images/')
-    images.prefix = 'assets/';
-
     // Create world
     final world = World();
     add(world);

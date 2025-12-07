@@ -72,10 +72,10 @@ flutter:
   assets:
     - assets/data/
     - assets/attribution/
-    - assets/sprites/player/
-    - assets/sprites/enemy/
-    - assets/sprites/door/
-    - assets/ui/
+    - assets/images/sprites/player/
+    - assets/images/sprites/enemy/
+    - assets/images/sprites/door/
+    - assets/images/ui/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
