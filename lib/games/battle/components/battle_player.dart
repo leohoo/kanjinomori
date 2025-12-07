@@ -122,56 +122,65 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks, HasGameRef
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load runner spritesheet
-    final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
-    const frameWidth = 100.0;
-    const frameHeight = 100.0;
+    // Try to load sprites, fall back to placeholder if not available
+    try {
+      final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+      const frameWidth = 100.0;
+      const frameHeight = 100.0;
 
-    // Create run animation (row 0, frames 0-5)
-    final runFrames = List.generate(6, (i) {
-      return Sprite(
+      // Create run animation (row 0, frames 0-5)
+      final runFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 0),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Create attack animation (row 2, "RUN AND SHOOT", frames 0-5)
+      final attackFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 2 * frameHeight),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Jump sprites (row 1)
+      final jumpUp = Sprite(
         spriteSheet,
-        srcPosition: Vector2(i * frameWidth, 0),
+        srcPosition: Vector2(0, frameHeight),
         srcSize: Vector2(frameWidth, frameHeight),
       );
-    });
-
-    // Create attack animation (row 2, "RUN AND SHOOT", frames 0-5)
-    final attackFrames = List.generate(6, (i) {
-      return Sprite(
+      final jumpDown = Sprite(
         spriteSheet,
-        srcPosition: Vector2(i * frameWidth, 2 * frameHeight),
+        srcPosition: Vector2(frameWidth, frameHeight),
         srcSize: Vector2(frameWidth, frameHeight),
       );
-    });
 
-    // Jump sprites (row 1)
-    final jumpUp = Sprite(
-      spriteSheet,
-      srcPosition: Vector2(0, frameHeight),
-      srcSize: Vector2(frameWidth, frameHeight),
-    );
-    final jumpDown = Sprite(
-      spriteSheet,
-      srcPosition: Vector2(frameWidth, frameHeight),
-      srcSize: Vector2(frameWidth, frameHeight),
-    );
+      _sprites = _PlayerSprites(
+        run: SpriteAnimation.spriteList(runFrames, stepTime: 0.1),
+        attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.05),
+        idle: runFrames[0],
+        jumpUp: jumpUp,
+        jumpDown: jumpDown,
+      );
 
-    _sprites = _PlayerSprites(
-      run: SpriteAnimation.spriteList(runFrames, stepTime: 0.1),
-      attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.05),
-      idle: runFrames[0],
-      jumpUp: jumpUp,
-      jumpDown: jumpDown,
-    );
-
-    // Start with idle sprite
-    _currentSprite = SpriteComponent(
-      sprite: _sprites!.idle,
-      size: size,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_currentSprite!);
+      // Start with idle sprite
+      _currentSprite = SpriteComponent(
+        sprite: _sprites!.idle,
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
+      add(_currentSprite!);
+    } catch (e) {
+      // Fall back to placeholder rectangle (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.primary,
+        anchor: Anchor.bottomCenter,
+      ));
+    }
 
     // Shield visual (hidden by default)
     _shieldVisual = RectangleComponent(

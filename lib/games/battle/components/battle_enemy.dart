@@ -128,66 +128,76 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     // Pick slime color based on difficulty (green=easy, pink=hard, etc.)
     _slimeColor = (difficulty * 3).clamp(0, 3).floor();
 
-    // Load slime spritesheet
-    // The spritesheet has 4 color rows, each with:
-    // idle (10 frames), gesture (10 frames), walk (10 frames), attack (10 frames), death (10 frames)
-    // Frame size: 32x32, but we scale it up
-    final spriteSheet = await game.images.load('sprites/enemy/slime_spritesheet.png');
-    const frameWidth = 32.0;
-    const frameHeight = 32.0;
-    const framesPerAnimation = 10;
-    final rowY = _slimeColor * frameHeight * 3; // 3 rows per color
+    // Try to load sprites, fall back to placeholder if not available
+    try {
+      // Load slime spritesheet
+      // The spritesheet has 4 color rows, each with:
+      // idle (10 frames), gesture (10 frames), walk (10 frames), attack (10 frames), death (10 frames)
+      // Frame size: 32x32, but we scale it up
+      final spriteSheet = await game.images.load('sprites/enemy/slime_spritesheet.png');
+      const frameWidth = 32.0;
+      const frameHeight = 32.0;
+      const framesPerAnimation = 10;
+      final rowY = _slimeColor * frameHeight * 3; // 3 rows per color
 
-    // Create idle animation
-    final idleFrames = List.generate(framesPerAnimation, (i) {
-      return Sprite(
-        spriteSheet,
-        srcPosition: Vector2(i * frameWidth, rowY),
-        srcSize: Vector2(frameWidth, frameHeight),
+      // Create idle animation
+      final idleFrames = List.generate(framesPerAnimation, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, rowY),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Create walk animation (row 2 within color block)
+      final walkFrames = List.generate(framesPerAnimation, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 2),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Create attack animation (row 3 within color block)
+      final attackFrames = List.generate(framesPerAnimation, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 3),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Create death animation (row 4 within color block)
+      final deathFrames = List.generate(framesPerAnimation, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 4),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      _sprites = _SlimeSprites(
+        idle: SpriteAnimation.spriteList(idleFrames, stepTime: 0.12),
+        walk: SpriteAnimation.spriteList(walkFrames, stepTime: 0.1),
+        attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.08),
+        death: SpriteAnimation.spriteList(deathFrames, stepTime: 0.1, loop: false),
       );
-    });
 
-    // Create walk animation (row 2 within color block)
-    final walkFrames = List.generate(framesPerAnimation, (i) {
-      return Sprite(
-        spriteSheet,
-        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 2),
-        srcSize: Vector2(frameWidth, frameHeight),
+      // Start with idle animation
+      _currentAnimation = SpriteAnimationComponent(
+        animation: _sprites!.idle,
+        size: size,
+        anchor: Anchor.bottomCenter,
       );
-    });
-
-    // Create attack animation (row 3 within color block)
-    final attackFrames = List.generate(framesPerAnimation, (i) {
-      return Sprite(
-        spriteSheet,
-        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 3),
-        srcSize: Vector2(frameWidth, frameHeight),
-      );
-    });
-
-    // Create death animation (row 4 within color block)
-    final deathFrames = List.generate(framesPerAnimation, (i) {
-      return Sprite(
-        spriteSheet,
-        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 4),
-        srcSize: Vector2(frameWidth, frameHeight),
-      );
-    });
-
-    _sprites = _SlimeSprites(
-      idle: SpriteAnimation.spriteList(idleFrames, stepTime: 0.12),
-      walk: SpriteAnimation.spriteList(walkFrames, stepTime: 0.1),
-      attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.08),
-      death: SpriteAnimation.spriteList(deathFrames, stepTime: 0.1, loop: false),
-    );
-
-    // Start with idle animation
-    _currentAnimation = SpriteAnimationComponent(
-      animation: _sprites!.idle,
-      size: size,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_currentAnimation!);
+      add(_currentAnimation!);
+    } catch (e) {
+      // Fall back to placeholder rectangle (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.enemyHp,
+        anchor: Anchor.bottomCenter,
+      ));
+    }
 
     // Telegraph indicator (hidden by default)
     _telegraphIndicator = RectangleComponent(
