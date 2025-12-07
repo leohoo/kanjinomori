@@ -5,30 +5,31 @@ import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 
 /// Circle with fill and border for visibility on both light and dark backgrounds.
-class _BorderedCircle extends PositionComponent {
+class _BorderedCircle extends CircleComponent {
   _BorderedCircle({
     required double radius,
     required Color fillColor,
     required Color borderColor,
     double borderWidth = 2.0,
-  })  : _radius = radius,
-        _fillPaint = Paint()
-          ..color = fillColor
-          ..style = PaintingStyle.fill,
-        _borderPaint = Paint()
+  })  : _borderPaint = Paint()
           ..color = borderColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = borderWidth,
-        super(size: Vector2.all(radius * 2), anchor: Anchor.center);
+        super(
+          radius: radius,
+          paint: Paint()
+            ..color = fillColor
+            ..style = PaintingStyle.fill,
+          anchor: Anchor.center,
+        );
 
-  final double _radius;
-  final Paint _fillPaint;
   final Paint _borderPaint;
 
   @override
   void render(ui.Canvas canvas) {
-    canvas.drawCircle(Offset(_radius, _radius), _radius, _fillPaint);
-    canvas.drawCircle(Offset(_radius, _radius), _radius, _borderPaint);
+    super.render(canvas);
+    // Draw border on top of fill
+    canvas.drawCircle(Offset(radius, radius), radius, _borderPaint);
   }
 }
 
