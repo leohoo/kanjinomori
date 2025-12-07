@@ -103,7 +103,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
         anchor: Anchor.bottomCenter,
       );
 
-      // Start with idle
+      // Start with idle (will be managed by _updateAnimation on state changes)
       add(_idleSprite!);
     } catch (e) {
       // Fall back to placeholder rectangle (for tests or missing assets)
@@ -201,11 +201,15 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   }
 
   void _updateAnimation() {
-    // Remove current visual
-    _idleSprite?.removeFromParent();
-    _runAnimation?.removeFromParent();
+    // Always remove both sprites first to avoid overlap
+    if (_idleSprite?.isMounted == true) {
+      _idleSprite?.removeFromParent();
+    }
+    if (_runAnimation?.isMounted == true) {
+      _runAnimation?.removeFromParent();
+    }
 
-    // Add appropriate visual
+    // Add the appropriate sprite based on state
     if (state == PlayerState.walking && _runAnimation != null) {
       add(_runAnimation!);
     } else if (_idleSprite != null) {
@@ -217,8 +221,13 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   void _updateSpriteFlip() {
     final scaleX = _facingRight ? 1.0 : -1.0;
-    _idleSprite?.scale = Vector2(scaleX, 1);
-    _runAnimation?.scale = Vector2(scaleX, 1);
+    // Only update the sprite that's currently mounted
+    if (_idleSprite?.isMounted == true) {
+      _idleSprite?.scale = Vector2(scaleX, 1);
+    }
+    if (_runAnimation?.isMounted == true) {
+      _runAnimation?.scale = Vector2(scaleX, 1);
+    }
   }
 
   void _updateDirection() {
