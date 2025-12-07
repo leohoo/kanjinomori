@@ -95,6 +95,10 @@ class GameNavigator extends ConsumerWidget {
         return const StageSelectScreen();
       case GameScreen.stage:
         return const StageScreen();
+      case GameScreen.field:
+        // Field mode uses StageCoordinatorScreen, handled separately
+        // For now, redirect to legacy stage screen
+        return const StageScreen();
       case GameScreen.question:
         return const QuestionScreen();
       case GameScreen.battle:

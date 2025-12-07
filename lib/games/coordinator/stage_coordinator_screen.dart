@@ -1,10 +1,8 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../utils/constants.dart';
-import '../field/field_game.dart';
 import '../field/field_screen.dart';
-import '../battle/battle_game.dart';
+import '../battle/battle_game.dart' as battle;
 import '../battle/battle_screen.dart';
 import 'game_coordinator.dart';
 
@@ -27,7 +25,7 @@ class StageCoordinatorScreen extends StatefulWidget {
   final Stage stage;
 
   /// Pre-generated questions for each door
-  final List<Question> questions;
+  final List<KanjiQuestion> questions;
 
   /// Callback when stage is complete
   final void Function(bool victory, int coinsEarned) onStageComplete;
@@ -38,10 +36,9 @@ class StageCoordinatorScreen extends StatefulWidget {
 
 class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
   late GameCoordinator _coordinator;
-  late FieldGame _fieldGame;
   final GlobalKey<FieldScreenState> _fieldKey = GlobalKey<FieldScreenState>();
 
-  Question? _currentQuestion;
+  KanjiQuestion? _currentQuestion;
 
   @override
   void initState() {
@@ -49,14 +46,6 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
     _coordinator = GameCoordinator(
       stageId: widget.stage.id,
       totalDoors: widget.questions.length,
-    );
-    _initFieldGame();
-  }
-
-  void _initFieldGame() {
-    _fieldGame = FieldGame(
-      completedDoors: _coordinator.completedDoors,
-      onDoorEnter: _handleDoorEnter,
     );
   }
 
@@ -68,6 +57,12 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
     setState(() {
       _currentQuestion = widget.questions[doorIndex];
     });
+  }
+
+  void _handleAllDoorsCompleted() {
+    // Transition to battle
+    _coordinator.startBattle();
+    setState(() {});
   }
 
   void _handleQuestionAnswer(bool correct) {
@@ -83,12 +78,12 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
       setState(() {});
     } else {
       // Return to field with updated door state
-      _fieldKey.currentState?.onQuestionComplete(correct);
+      _fieldKey.currentState?.onQuestionComplete(doorIndex, correct);
     }
   }
 
-  void _handleBattleEnd(BattleResult result) {
-    final victory = result == BattleResult.victory;
+  void _handleBattleEnd(battle.BattleResult result) {
+    final victory = result == battle.BattleResult.victory;
     _coordinator.completeBattle(victory);
     widget.onStageComplete(victory, _coordinator.coinsEarned);
   }
@@ -112,22 +107,18 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
   Widget _buildFieldScreen() {
     return FieldScreen(
       key: _fieldKey,
-      game: _fieldGame,
+      stageId: widget.stage.id.toString(),
       completedDoors: _coordinator.completedDoors,
+      onDoorEnter: _handleDoorEnter,
+      onAllDoorsCompleted: _handleAllDoorsCompleted,
     );
   }
 
   Widget _buildQuestionOverlay() {
-    // Show field with question overlay
-    return Stack(
-      children: [
-        // Field in background (paused)
-        IgnorePointer(
-          child: GameWidget(game: _fieldGame),
-        ),
-        // Question overlay
-        _buildQuestionCard(),
-      ],
+    // Show question card overlay
+    return Scaffold(
+      backgroundColor: Colors.black54,
+      body: Center(child: _buildQuestionCard()),
     );
   }
 
@@ -136,64 +127,61 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
     if (question == null) return const SizedBox.shrink();
 
     return Container(
-      color: Colors.black54,
-      child: Center(
-        child: Container(
-          width: 320,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                spreadRadius: 5,
-              ),
-            ],
+      width: 320,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            spreadRadius: 5,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Door ${_coordinator.activeDoorIndex + 1}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                question.kanji.character,
-                style: const TextStyle(
-                  fontSize: 72,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                question.prompt,
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ..._buildAnswerButtons(question),
-            ],
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Door ${_coordinator.activeDoorIndex + 1}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            question.kanji.kanji,
+            style: const TextStyle(
+              fontSize: 72,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            question.type == QuestionType.reading
+                ? 'What is the reading?'
+                : 'Write this kanji',
+            style: const TextStyle(fontSize: 18),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ..._buildAnswerButtons(question),
+        ],
       ),
     );
   }
 
-  List<Widget> _buildAnswerButtons(Question question) {
-    return question.options.map((option) {
+  List<Widget> _buildAnswerButtons(KanjiQuestion question) {
+    return question.choices.map((choice) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              final correct = option == question.correctAnswer;
+              final correct = choice == question.correctAnswer;
               _handleQuestionAnswer(correct);
             },
             style: ElevatedButton.styleFrom(
@@ -201,7 +189,7 @@ class _StageCoordinatorScreenState extends State<StageCoordinatorScreen> {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             child: Text(
-              option,
+              choice,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
