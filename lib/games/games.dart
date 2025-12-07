@@ -1,4 +1,4 @@
-/// Game module exports for Flame-based game components
+// Game module exports for Flame-based game components
 
 // Shared components
 export 'components/joystick_component.dart';
