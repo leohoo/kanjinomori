@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
+import '../../effects/particle_effect.dart';
 import 'player_component.dart';
 
 /// Door state for visual appearance and interaction
@@ -161,7 +162,7 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
     state = DoorState.completed;
     _updateVisuals();
 
-    // Add completion effect
+    // Add scale effect
     add(
       ScaleEffect.by(
         Vector2.all(1.1),
@@ -171,6 +172,12 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
         ),
       ),
     );
+
+    // Add door completion particle effect (green glow + rising particles)
+    parent?.add(DoorCompletionEffect(
+      position: position.clone(),
+      doorSize: size.clone(),
+    ));
   }
 
   /// Set door as active (player is interacting)

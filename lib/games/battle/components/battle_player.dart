@@ -2,6 +2,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
+import '../../effects/particle_effect.dart';
 
 /// Player state for battle animations
 enum BattlePlayerState {
@@ -86,6 +87,12 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
 
   /// Callback when player takes damage
   void Function(int damage)? onDamage;
+
+  /// Callback when player jumps (for effects)
+  VoidCallback? onJump;
+
+  /// Callback when player lands (for effects)
+  VoidCallback? onLand;
 
   // Visual components
   late RectangleComponent _visual;
@@ -224,6 +231,10 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
     // Reset jump state
     isJumpHeld = false;
     jumpHoldTime = 0;
+
+    // Spawn landing dust effect
+    parent?.add(LandingDustEffect(position: position.clone()));
+    onLand?.call();
   }
 
   void _updateState() {
@@ -270,6 +281,10 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
     isJumpHeld = true;
     jumpHoldTime = 0;
     velocity.y = -GamePhysics.jumpForce;
+
+    // Spawn jump wind effect
+    parent?.add(JumpWindEffect(position: position.clone()));
+    onJump?.call();
   }
 
   /// End jump hold (call when button released)
@@ -298,6 +313,17 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
       GameSizes.attackHitboxWidth,
       GameSizes.attackHitboxHeight,
     );
+
+    // Spawn attack slash effect
+    final slashPosition = Vector2(
+      facingRight ? position.x + size.x / 2 : position.x - size.x / 2,
+      position.y - size.y * 0.5,
+    );
+    parent?.add(AttackSlashEffect(
+      position: slashPosition,
+      facingRight: facingRight,
+      isAerial: isAerial,
+    ));
 
     onAttack?.call(hitbox, isAerial);
   }
@@ -331,6 +357,9 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
     hp -= damage;
     isInvincible = true;
     invincibilityTimer = GamePhysics.invincibilityDuration;
+
+    // Spawn damage flash effect
+    parent?.add(DamageFlashEffect(position: position.clone(), flashSize: size.clone()));
 
     // Knockback
     velocity.x = facingRight
