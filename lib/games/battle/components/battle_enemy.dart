@@ -55,11 +55,11 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
   /// Whether enemy is facing right
   bool facingRight = false;
 
-  /// Current HP
-  late int hp;
+  /// Current HP (initialized in onLoad based on difficulty)
+  int hp = 100;
 
-  /// Maximum HP
-  late int maxHp;
+  /// Maximum HP (initialized in onLoad based on difficulty)
+  int maxHp = 100;
 
   /// Attack timer
   double attackTimer = 0;
@@ -359,9 +359,11 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
     invincibilityTimer = 0.2;
 
     // Knockback
-    velocity.x = facingRight ? 80 : -80;
+    velocity.x = facingRight
+        ? GamePhysics.knockbackHorizontal
+        : -GamePhysics.knockbackHorizontal;
     if (isGrounded) {
-      velocity.y = -100;
+      velocity.y = -GamePhysics.knockbackVertical;
       isGrounded = false;
     }
 

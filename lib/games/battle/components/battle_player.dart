@@ -333,9 +333,11 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
     invincibilityTimer = GamePhysics.invincibilityDuration;
 
     // Knockback
-    velocity.x = facingRight ? -100 : 100;
+    velocity.x = facingRight
+        ? -GamePhysics.playerKnockbackHorizontal
+        : GamePhysics.playerKnockbackHorizontal;
     if (isGrounded) {
-      velocity.y = -150;
+      velocity.y = -GamePhysics.playerKnockbackVertical;
       isGrounded = false;
     }
 
