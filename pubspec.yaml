@@ -36,7 +36,9 @@ dependencies:
   hive_flutter: ^1.1.0
   path_provider: ^2.1.2
   google_fonts: ^6.1.0
-  audioplayers: ^5.2.1
+  audioplayers: ^6.5.1
+  flame: ^1.18.0
+  flame_audio: ^2.10.2
 
 dev_dependencies:
   flutter_test:
