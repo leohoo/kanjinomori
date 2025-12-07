@@ -1,0 +1,11 @@
+Portal Sprites
+--------------
+Author: Cethiel
+Source: https://opengameart.org/content/portals
+License: CC0 (Public Domain)
+
+No attribution required.
+
+Files:
+- portal1.png - Portal with arch frame (animated)
+- portal2.png - Portal rings only (animated)

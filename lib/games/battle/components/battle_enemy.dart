@@ -15,6 +15,21 @@ enum EnemyState {
   hurt,
 }
 
+/// Cached slime sprite animations
+class _SlimeSprites {
+  final SpriteAnimation idle;
+  final SpriteAnimation walk;
+  final SpriteAnimation attack;
+  final SpriteAnimation death;
+
+  _SlimeSprites({
+    required this.idle,
+    required this.walk,
+    required this.attack,
+    required this.death,
+  });
+}
+
 /// Battle enemy component with AI behavior.
 ///
 /// AI Behaviors:
@@ -23,7 +38,7 @@ enum EnemyState {
 /// - Attacks when in range
 /// - Jumps when player jumps (reactive)
 /// - Mix of ground and aerial attacks
-class BattleEnemy extends PositionComponent with CollisionCallbacks {
+class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameReference {
   BattleEnemy({
     required Vector2 position,
     required this.groundY,
@@ -96,8 +111,11 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
   VoidCallback? onDeath;
 
   // Visual components
-  late RectangleComponent _visual;
   late RectangleComponent _telegraphIndicator;
+  _SlimeSprites? _sprites;
+  SpriteAnimationComponent? _currentAnimation;
+  EnemyState _displayedState = EnemyState.idle;
+  int _slimeColor = 0; // 0=green, 1=blue, 2=pink, 3=yellow
 
   @override
   Future<void> onLoad() async {
@@ -107,13 +125,69 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
     maxHp = (100 * difficulty).round();
     hp = maxHp;
 
-    // Enemy visual (purple placeholder)
-    _visual = RectangleComponent(
+    // Pick slime color based on difficulty (green=easy, pink=hard, etc.)
+    _slimeColor = (difficulty * 3).clamp(0, 3).floor();
+
+    // Load slime spritesheet
+    // The spritesheet has 4 color rows, each with:
+    // idle (10 frames), gesture (10 frames), walk (10 frames), attack (10 frames), death (10 frames)
+    // Frame size: 32x32, but we scale it up
+    final spriteSheet = await game.images.load('sprites/enemy/slime_spritesheet.png');
+    const frameWidth = 32.0;
+    const frameHeight = 32.0;
+    const framesPerAnimation = 10;
+    final rowY = _slimeColor * frameHeight * 3; // 3 rows per color
+
+    // Create idle animation
+    final idleFrames = List.generate(framesPerAnimation, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, rowY),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    // Create walk animation (row 2 within color block)
+    final walkFrames = List.generate(framesPerAnimation, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 2),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    // Create attack animation (row 3 within color block)
+    final attackFrames = List.generate(framesPerAnimation, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 3),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    // Create death animation (row 4 within color block)
+    final deathFrames = List.generate(framesPerAnimation, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, rowY + frameHeight * 4),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    _sprites = _SlimeSprites(
+      idle: SpriteAnimation.spriteList(idleFrames, stepTime: 0.12),
+      walk: SpriteAnimation.spriteList(walkFrames, stepTime: 0.1),
+      attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.08),
+      death: SpriteAnimation.spriteList(deathFrames, stepTime: 0.1, loop: false),
+    );
+
+    // Start with idle animation
+    _currentAnimation = SpriteAnimationComponent(
+      animation: _sprites!.idle,
       size: size,
-      paint: Paint()..color = AppColors.enemyHp,
       anchor: Anchor.bottomCenter,
     );
-    add(_visual);
+    add(_currentAnimation!);
 
     // Telegraph indicator (hidden by default)
     _telegraphIndicator = RectangleComponent(
@@ -328,27 +402,78 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
   }
 
   void _updateVisuals() {
-    // Flip based on direction
-    // TODO(Phase 4): Replace scale.x=-1 with flipHorizontallyAroundCenter()
-    // when adding actual sprites, as negative scale may not render correctly.
-    if (facingRight) {
-      _visual.scale = Vector2(1, 1);
-    } else {
-      _visual.scale = Vector2(-1, 1);
+    if (_sprites == null) return;
+
+    // Switch animation based on state
+    if (state != _displayedState) {
+      _displayedState = state;
+      _switchAnimation();
     }
+
+    // Flip based on direction
+    final scaleX = facingRight ? 1.0 : -1.0;
+    _currentAnimation?.scale = Vector2(scaleX, 1);
 
     // Invincibility flash
     if (isInvincible) {
       final flash = (invincibilityTimer * 10).floor() % 2 == 0;
-      _visual.paint.color = flash ? AppColors.enemyHp : AppColors.enemyHp.withValues(alpha: 0.5);
+      final opacity = flash ? 1.0 : 0.5;
+      _currentAnimation?.paint.color = Colors.white.withValues(alpha: opacity);
     } else {
-      _visual.paint.color = AppColors.enemyHp;
+      _currentAnimation?.paint.color = Colors.white;
     }
 
     // Telegraph indicator
     _telegraphIndicator.paint.color = isTelegraphing
         ? Colors.red.withValues(alpha: 0.8)
         : Colors.red.withValues(alpha: 0.0);
+  }
+
+  void _switchAnimation() {
+    if (_sprites == null) return;
+
+    // Remove current animation
+    _currentAnimation?.removeFromParent();
+
+    // Select animation based on state
+    SpriteAnimation animation;
+    switch (state) {
+      case EnemyState.approach:
+      case EnemyState.retreat:
+        animation = _sprites!.walk;
+        break;
+      case EnemyState.attack:
+      case EnemyState.jumpAttack:
+        animation = _sprites!.attack;
+        break;
+      case EnemyState.hurt:
+        animation = _sprites!.idle; // Use idle for hurt, could add hurt animation
+        break;
+      case EnemyState.idle:
+        animation = _sprites!.idle;
+        break;
+    }
+
+    _currentAnimation = SpriteAnimationComponent(
+      animation: animation,
+      size: size,
+      anchor: Anchor.bottomCenter,
+    );
+    add(_currentAnimation!);
+  }
+
+  /// Play death animation and remove
+  void playDeathAnimation() {
+    if (_sprites == null) return;
+
+    _currentAnimation?.removeFromParent();
+    _currentAnimation = SpriteAnimationComponent(
+      animation: _sprites!.death,
+      size: size,
+      anchor: Anchor.bottomCenter,
+      removeOnFinish: true,
+    );
+    add(_currentAnimation!);
   }
 
   /// Take damage

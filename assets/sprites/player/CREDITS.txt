@@ -1,0 +1,16 @@
+Runner Spritesheet
+------------------
+Author: Bevouliin (https://bevouliin.com)
+Source: https://opengameart.org/content/bevouliin-free-running-knight-game-character-sprites
+License: CC0 (Public Domain)
+
+No attribution required.
+
+Animations included:
+- Run (6 frames)
+- Jump Up (2 frames)
+- Jump Down (2 frames)
+- Run and Shoot (6 frames + projectile)
+- Jump and Shoot (4 frames)
+
+Frame size: ~100x100 pixels (varies)

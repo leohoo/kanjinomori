@@ -16,6 +16,23 @@ enum BattlePlayerState {
   hurt,
 }
 
+/// Cached player sprite animations
+class _PlayerSprites {
+  final SpriteAnimation run;
+  final SpriteAnimation attack;
+  final Sprite idle;
+  final Sprite jumpUp;
+  final Sprite jumpDown;
+
+  _PlayerSprites({
+    required this.run,
+    required this.attack,
+    required this.idle,
+    required this.jumpUp,
+    required this.jumpDown,
+  });
+}
+
 /// Battle player component with jump, attack, and shield mechanics.
 ///
 /// Features:
@@ -24,7 +41,7 @@ enum BattlePlayerState {
 /// - Ground and aerial attacks
 /// - Shield blocking
 /// - Gravity and ground collision
-class BattlePlayer extends PositionComponent with CollisionCallbacks {
+class BattlePlayer extends PositionComponent with CollisionCallbacks, HasGameReference {
   BattlePlayer({
     required Vector2 position,
     required this.groundY,
@@ -95,20 +112,66 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
   VoidCallback? onLand;
 
   // Visual components
-  late RectangleComponent _visual;
   late RectangleComponent _shieldVisual;
+  _PlayerSprites? _sprites;
+  SpriteComponent? _currentSprite;
+  SpriteAnimationComponent? _currentAnimation;
+  BattlePlayerState _displayedState = BattlePlayerState.idle;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Player visual (placeholder)
-    _visual = RectangleComponent(
+    // Load runner spritesheet
+    final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+    const frameWidth = 100.0;
+    const frameHeight = 100.0;
+
+    // Create run animation (row 0, frames 0-5)
+    final runFrames = List.generate(6, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, 0),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    // Create attack animation (row 2, "RUN AND SHOOT", frames 0-5)
+    final attackFrames = List.generate(6, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, 2 * frameHeight),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    // Jump sprites (row 1)
+    final jumpUp = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(0, frameHeight),
+      srcSize: Vector2(frameWidth, frameHeight),
+    );
+    final jumpDown = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(frameWidth, frameHeight),
+      srcSize: Vector2(frameWidth, frameHeight),
+    );
+
+    _sprites = _PlayerSprites(
+      run: SpriteAnimation.spriteList(runFrames, stepTime: 0.1),
+      attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.05),
+      idle: runFrames[0],
+      jumpUp: jumpUp,
+      jumpDown: jumpDown,
+    );
+
+    // Start with idle sprite
+    _currentSprite = SpriteComponent(
+      sprite: _sprites!.idle,
       size: size,
-      paint: Paint()..color = AppColors.primary,
       anchor: Anchor.bottomCenter,
     );
-    add(_visual);
+    add(_currentSprite!);
 
     // Shield visual (hidden by default)
     _shieldVisual = RectangleComponent(
@@ -252,25 +315,91 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
   }
 
   void _updateVisuals() {
-    // Flip sprite based on direction
-    if (facingRight) {
-      _visual.scale = Vector2(1, 1);
-    } else {
-      _visual.scale = Vector2(-1, 1);
+    if (_sprites == null) return;
+
+    // Determine which visual to show based on state
+    if (state != _displayedState) {
+      _displayedState = state;
+      _switchVisual();
     }
 
-    // Invincibility flash
+    // Flip sprite based on direction
+    final scaleX = facingRight ? 1.0 : -1.0;
+    _currentSprite?.scale = Vector2(scaleX, 1);
+    _currentAnimation?.scale = Vector2(scaleX, 1);
+
+    // Invincibility flash (reduce opacity)
     if (isInvincible) {
       final flash = (invincibilityTimer * 10).floor() % 2 == 0;
-      _visual.paint.color = flash ? AppColors.primary : AppColors.primaryLight;
+      final opacity = flash ? 1.0 : 0.5;
+      _currentSprite?.paint.color = Colors.white.withValues(alpha: opacity);
+      _currentAnimation?.paint.color = Colors.white.withValues(alpha: opacity);
     } else {
-      _visual.paint.color = AppColors.primary;
+      _currentSprite?.paint.color = Colors.white;
+      _currentAnimation?.paint.color = Colors.white;
     }
 
     // Shield visual
     _shieldVisual.paint.color = isShielding
         ? Colors.blue.withValues(alpha: 0.5)
         : Colors.blue.withValues(alpha: 0.0);
+  }
+
+  void _switchVisual() {
+    if (_sprites == null) return;
+
+    // Remove current visuals
+    _currentSprite?.removeFromParent();
+    _currentAnimation?.removeFromParent();
+    _currentSprite = null;
+    _currentAnimation = null;
+
+    // Add new visual based on state
+    switch (state) {
+      case BattlePlayerState.walking:
+        _currentAnimation = SpriteAnimationComponent(
+          animation: _sprites!.run,
+          size: size,
+          anchor: Anchor.bottomCenter,
+        );
+        add(_currentAnimation!);
+        break;
+      case BattlePlayerState.attacking:
+      case BattlePlayerState.aerialAttacking:
+        _currentAnimation = SpriteAnimationComponent(
+          animation: _sprites!.attack,
+          size: size,
+          anchor: Anchor.bottomCenter,
+        );
+        add(_currentAnimation!);
+        break;
+      case BattlePlayerState.jumping:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.jumpUp,
+          size: size,
+          anchor: Anchor.bottomCenter,
+        );
+        add(_currentSprite!);
+        break;
+      case BattlePlayerState.falling:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.jumpDown,
+          size: size,
+          anchor: Anchor.bottomCenter,
+        );
+        add(_currentSprite!);
+        break;
+      case BattlePlayerState.idle:
+      case BattlePlayerState.shielding:
+      case BattlePlayerState.hurt:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.idle,
+          size: size,
+          anchor: Anchor.bottomCenter,
+        );
+        add(_currentSprite!);
+        break;
+    }
   }
 
   /// Start jump (call when button pressed)

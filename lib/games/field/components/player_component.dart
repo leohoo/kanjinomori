@@ -1,6 +1,5 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
 import 'door_component.dart';
 
@@ -29,7 +28,7 @@ enum PlayerDirection {
 /// - Smooth acceleration/deceleration
 /// - Collision detection with doors and boundaries
 /// - Dust effect when moving at max speed
-class PlayerComponent extends PositionComponent with CollisionCallbacks {
+class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGameReference {
   PlayerComponent({
     required Vector2 position,
   }) : super(
@@ -56,20 +55,53 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   /// Callback when player collides with a door
   void Function(PositionComponent door)? onDoorCollision;
 
-  // Visual representation (placeholder rectangle until sprites)
-  late RectangleComponent _visual;
+  // Sprite animation components
+  SpriteAnimationComponent? _runAnimation;
+  SpriteComponent? _idleSprite;
+  bool _facingRight = true;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Placeholder visual (green rectangle)
-    _visual = RectangleComponent(
+    // Load runner spritesheet
+    // The spritesheet has: RUN (6 frames), JUMP (2+2 frames), RUN_AND_SHOOT (6 frames)
+    // Frame size is approximately 100x100
+    final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+
+    // Create run animation from first row (6 frames, ~100x100 each)
+    // Adjust these values based on actual sprite dimensions
+    const frameWidth = 100.0;
+    const frameHeight = 100.0;
+
+    final runFrames = List.generate(6, (i) {
+      return Sprite(
+        spriteSheet,
+        srcPosition: Vector2(i * frameWidth, 0),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+    });
+
+    final runSpriteAnimation = SpriteAnimation.spriteList(
+      runFrames,
+      stepTime: 0.1,
+    );
+
+    _runAnimation = SpriteAnimationComponent(
+      animation: runSpriteAnimation,
       size: size,
-      paint: Paint()..color = AppColors.primary,
       anchor: Anchor.bottomCenter,
     );
-    add(_visual);
+
+    // Use first frame as idle
+    _idleSprite = SpriteComponent(
+      sprite: runFrames[0],
+      size: size,
+      anchor: Anchor.bottomCenter,
+    );
+
+    // Start with idle
+    add(_idleSprite!);
 
     // Add hitbox for collision detection
     add(
@@ -134,11 +166,48 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   }
 
   void _updateState() {
+    final previousState = state;
+
     if (velocity.length > 1) {
       state = PlayerState.walking;
     } else {
       state = PlayerState.idle;
     }
+
+    // Switch animations when state changes
+    if (previousState != state) {
+      _updateAnimation();
+    }
+
+    // Update facing direction
+    if (velocity.x.abs() > 0.1) {
+      final shouldFaceRight = velocity.x > 0;
+      if (_facingRight != shouldFaceRight) {
+        _facingRight = shouldFaceRight;
+        _updateSpriteFlip();
+      }
+    }
+  }
+
+  void _updateAnimation() {
+    // Remove current visual
+    _idleSprite?.removeFromParent();
+    _runAnimation?.removeFromParent();
+
+    // Add appropriate visual
+    if (state == PlayerState.walking && _runAnimation != null) {
+      add(_runAnimation!);
+    } else if (_idleSprite != null) {
+      add(_idleSprite!);
+    }
+
+    _updateSpriteFlip();
+  }
+
+  void _updateSpriteFlip() {
+    final scaleX = _facingRight ? 1.0 : -1.0;
+    _idleSprite?.scale = Vector2(scaleX, 1);
+    _runAnimation?.scale = Vector2(scaleX, 1);
   }
 
   void _updateDirection() {
