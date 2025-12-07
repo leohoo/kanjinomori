@@ -34,7 +34,7 @@ class FieldGame extends FlameGame with HasCollisionDetection {
   // Game components
   late TileMapComponent tileMap;
   late PlayerComponent player;
-  late GameJoystick joystick;
+  late SpriteJoystick joystick;
   late List<DoorComponent> doors;
 
   // Camera
@@ -88,7 +88,7 @@ class FieldGame extends FlameGame with HasCollisionDetection {
     cameraComponent.follow(player);
 
     // Create joystick (fixed to viewport)
-    joystick = GameJoystick(
+    joystick = SpriteJoystick(
       position: Vector2(
         GameSizes.joystickSize / 2 + 20,
         size.y - GameSizes.joystickSize / 2 - 20,

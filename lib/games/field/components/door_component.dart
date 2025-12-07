@@ -25,7 +25,7 @@ enum DoorState {
 /// - Collision detection for player interaction
 /// - Glow effect on available doors
 /// - Particle effect when completed
-class DoorComponent extends PositionComponent with CollisionCallbacks {
+class DoorComponent extends PositionComponent with CollisionCallbacks, HasGameReference {
   DoorComponent({
     required Vector2 position,
     required this.doorIndex,
@@ -46,8 +46,7 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
   void Function(int doorIndex)? onDoorEnter;
 
   // Visual components
-  late RectangleComponent _frame;
-  late RectangleComponent _inner;
+  SpriteAnimationComponent? _portalAnimation;
   late CircleComponent _glowEffect;
 
   // Glow animation
@@ -58,27 +57,60 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Door frame (wood brown)
-    _frame = RectangleComponent(
-      size: size,
-      paint: Paint()..color = AppColors.secondary,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_frame);
+    // Try to load portal sprites, fall back to placeholder if not available
+    try {
+      // Load portal spritesheet
+      // portal1.png: 128x160px with animated frames in a grid layout
+      final portalSheet = await game.images.load('sprites/door/portal1.png');
 
-    // Inner door area (darker)
-    _inner = RectangleComponent(
-      size: Vector2(size.x * 0.8, size.y * 0.9),
-      position: Vector2(size.x * 0.1, 0),
-      paint: Paint()..color = AppColors.secondaryDark,
-      anchor: Anchor.topLeft,
-    );
-    add(_inner);
+      // Spritesheet: 128x160px, 4 columns x 5 rows (16 frames, 4 empty)
+      // Frame size: 128÷4 = 32px width, 160÷5 = 32px height
+      const frameWidth = 32.0;
+      const frameHeight = 32.0;
+      const columns = 4;
+      const rows = 4;
+
+      final portalFrames = <Sprite>[];
+      for (var row = 0; row < rows; row++) {
+        for (var col = 0; col < columns; col++) {
+          portalFrames.add(Sprite(
+            portalSheet,
+            srcPosition: Vector2(col * frameWidth, row * frameHeight),
+            srcSize: Vector2(frameWidth, frameHeight),
+          ));
+        }
+      }
+
+      final portalAnimation = SpriteAnimation.spriteList(
+        portalFrames,
+        stepTime: 0.1,
+      );
+
+      _portalAnimation = SpriteAnimationComponent(
+        animation: portalAnimation,
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
+      add(_portalAnimation!);
+    } catch (e) {
+      // Fall back to placeholder rectangles (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.secondary,
+        anchor: Anchor.bottomCenter,
+      ));
+      add(RectangleComponent(
+        size: Vector2(size.x * 0.8, size.y * 0.9),
+        position: Vector2(size.x * 0.1, 0),
+        paint: Paint()..color = AppColors.secondaryDark,
+        anchor: Anchor.topLeft,
+      ));
+    }
 
     // Glow effect (only visible when available)
     _glowEffect = CircleComponent(
-      radius: size.x * 0.8,
-      position: Vector2(size.x / 2, size.y * 0.4),
+      radius: size.x * 0.6,
+      position: Vector2(0, -size.y * 0.5),
       paint: Paint()
         ..color = _getGlowColor().withValues(alpha: _glowOpacity)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
@@ -143,16 +175,17 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
   void _updateVisuals() {
     switch (state) {
       case DoorState.available:
-        _inner.paint.color = AppColors.secondaryDark;
         _glowEffect.paint.color = _getGlowColor().withValues(alpha: _glowOpacity);
+        _portalAnimation?.paint.color = Colors.white;
         break;
       case DoorState.completed:
-        _inner.paint.color = AppColors.success.withValues(alpha: 0.5);
         _glowEffect.paint.color = AppColors.success.withValues(alpha: 0.3);
+        // Tint the portal green when completed
+        _portalAnimation?.paint.color = AppColors.success;
         break;
       case DoorState.active:
-        _inner.paint.color = Colors.white.withValues(alpha: 0.8);
         _glowEffect.paint.color = Colors.white.withValues(alpha: 0.5);
+        _portalAnimation?.paint.color = Colors.white;
         break;
     }
   }

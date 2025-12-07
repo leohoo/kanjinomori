@@ -1,0 +1,17 @@
+Slime Spritesheet
+-----------------
+Author: Calciumtrice
+Source: https://opengameart.org/content/animated-slime
+License: CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+
+Attribution required: Credit "Calciumtrice" when using these assets.
+
+Animations included:
+- Idle (10 frames)
+- Gesture (10 frames)
+- Walk (10 frames)
+- Attack (10 frames)
+- Death (10 frames)
+
+4 color variants: Green, Blue, Pink, Yellow
+Frame size: 32x32 pixels

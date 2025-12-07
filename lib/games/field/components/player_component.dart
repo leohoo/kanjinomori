@@ -29,7 +29,7 @@ enum PlayerDirection {
 /// - Smooth acceleration/deceleration
 /// - Collision detection with doors and boundaries
 /// - Dust effect when moving at max speed
-class PlayerComponent extends PositionComponent with CollisionCallbacks {
+class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGameReference {
   PlayerComponent({
     required Vector2 position,
   }) : super(
@@ -56,20 +56,65 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   /// Callback when player collides with a door
   void Function(PositionComponent door)? onDoorCollision;
 
-  // Visual representation (placeholder rectangle until sprites)
-  late RectangleComponent _visual;
+  // Sprite animation components
+  SpriteAnimationComponent? _runAnimation;
+  SpriteComponent? _idleSprite;
+  bool _facingRight = true;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Placeholder visual (green rectangle)
-    _visual = RectangleComponent(
-      size: size,
-      paint: Paint()..color = AppColors.primary,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_visual);
+    // Try to load sprites, fall back to placeholder if not available
+    try {
+      // Load runner spritesheet
+      // The spritesheet has: RUN (6 frames), JUMP (2+2 frames), RUN_AND_SHOOT (6 frames)
+      // Spritesheet: 600x636px, actual sprite area: 504x600px, 6 columns x 4 rows with spacing
+      final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+
+      // Create run animation from first row (6 frames)
+      // Frame size: 504÷6 = 84px width, 100px height
+      // Row offset: 160px (100px frame + 60px spacing)
+      const frameWidth = 84.0;
+      const frameHeight = 100.0;
+      const rowOffset = 160.0;
+
+      final runFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 0),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      final runSpriteAnimation = SpriteAnimation.spriteList(
+        runFrames,
+        stepTime: 0.1,
+      );
+
+      _runAnimation = SpriteAnimationComponent(
+        animation: runSpriteAnimation,
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
+
+      // Use first frame as idle
+      _idleSprite = SpriteComponent(
+        sprite: runFrames[0],
+        size: size,
+        anchor: Anchor.bottomCenter,
+      );
+
+      // Start with idle (will be managed by _updateAnimation on state changes)
+      add(_idleSprite!);
+    } catch (e) {
+      // Fall back to placeholder rectangle (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.primary,
+        anchor: Anchor.bottomCenter,
+      ));
+    }
 
     // Add hitbox for collision detection
     add(
@@ -134,10 +179,56 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   }
 
   void _updateState() {
+    final previousState = state;
+
     if (velocity.length > 1) {
       state = PlayerState.walking;
     } else {
       state = PlayerState.idle;
+    }
+
+    // Switch animations when state changes
+    if (previousState != state) {
+      _updateAnimation();
+    }
+
+    // Update facing direction
+    if (velocity.x.abs() > 0.1) {
+      final shouldFaceRight = velocity.x > 0;
+      if (_facingRight != shouldFaceRight) {
+        _facingRight = shouldFaceRight;
+        _updateSpriteFlip();
+      }
+    }
+  }
+
+  void _updateAnimation() {
+    // Always remove both sprites first to avoid overlap
+    if (_idleSprite?.isMounted == true) {
+      _idleSprite?.removeFromParent();
+    }
+    if (_runAnimation?.isMounted == true) {
+      _runAnimation?.removeFromParent();
+    }
+
+    // Add the appropriate sprite based on state
+    if (state == PlayerState.walking && _runAnimation != null) {
+      add(_runAnimation!);
+    } else if (_idleSprite != null) {
+      add(_idleSprite!);
+    }
+
+    _updateSpriteFlip();
+  }
+
+  void _updateSpriteFlip() {
+    final scaleX = _facingRight ? 1.0 : -1.0;
+    // Only update the sprite that's currently mounted
+    if (_idleSprite?.isMounted == true) {
+      _idleSprite?.scale = Vector2(scaleX, 1);
+    }
+    if (_runAnimation?.isMounted == true) {
+      _runAnimation?.scale = Vector2(scaleX, 1);
     }
   }
 

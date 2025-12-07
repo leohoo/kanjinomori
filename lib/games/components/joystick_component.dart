@@ -1,35 +1,57 @@
+import 'dart:ui' as ui;
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 
-/// Virtual joystick component for player movement control.
-///
-/// Position: Bottom-left of screen
-/// Dead zone: 20% (configurable via [GamePhysics.joystickDeadZone])
-///
-/// Used in both field exploration (8-directional) and battle (left/right).
-class GameJoystick extends JoystickComponent {
-  GameJoystick({
+/// Circle with fill and border for visibility on both light and dark backgrounds.
+class _BorderedCircle extends CircleComponent {
+  _BorderedCircle({
+    required double radius,
+    required Color fillColor,
+    required Color borderColor,
+    double borderWidth = 2.0,
+  })  : _borderPaint = Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = borderWidth,
+        super(
+          radius: radius,
+          paint: Paint()
+            ..color = fillColor
+            ..style = PaintingStyle.fill,
+        );
+
+  final Paint _borderPaint;
+
+  @override
+  void render(ui.Canvas canvas) {
+    super.render(canvas);
+    // Draw border on top of fill
+    canvas.drawCircle(Offset(radius, radius), radius, _borderPaint);
+  }
+}
+
+/// Virtual joystick with bordered circles for visibility on any background.
+class SpriteJoystick extends JoystickComponent {
+  SpriteJoystick({
     super.position,
     double? size,
     double? knobSize,
   }) : super(
-          knob: CircleComponent(
+          knob: _BorderedCircle(
             radius: (knobSize ?? GameSizes.joystickKnobSize) / 2,
-            paint: Paint()
-              ..color = Colors.white.withValues(alpha: 0.8)
-              ..style = PaintingStyle.fill,
+            fillColor: Colors.white.withValues(alpha: 0.8),
+            borderColor: Colors.black.withValues(alpha: 0.5),
           ),
-          background: CircleComponent(
+          background: _BorderedCircle(
             radius: (size ?? GameSizes.joystickSize) / 2,
-            paint: Paint()
-              ..color = Colors.white.withValues(alpha: 0.3)
-              ..style = PaintingStyle.fill,
+            fillColor: Colors.white.withValues(alpha: 0.3),
+            borderColor: Colors.black.withValues(alpha: 0.3),
           ),
         );
 
   /// Returns the joystick direction with dead zone applied.
-  /// Values below [GamePhysics.joystickDeadZone] are treated as zero.
   Vector2 get directionWithDeadZone {
     if (delta.length < GamePhysics.joystickDeadZone) {
       return Vector2.zero();
@@ -40,6 +62,6 @@ class GameJoystick extends JoystickComponent {
   /// Returns true if the joystick is being pushed beyond dead zone.
   bool get isActive => delta.length >= GamePhysics.joystickDeadZone;
 
-  /// Returns true if joystick is at maximum input (for dust effect trigger).
+  /// Returns true if joystick is at maximum input.
   bool get isMaxInput => delta.length > 0.9;
 }

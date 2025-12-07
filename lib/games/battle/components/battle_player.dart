@@ -16,6 +16,23 @@ enum BattlePlayerState {
   hurt,
 }
 
+/// Cached player sprite animations
+class _PlayerSprites {
+  final SpriteAnimation run;
+  final SpriteAnimation attack;
+  final Sprite idle;
+  final Sprite jumpUp;
+  final Sprite jumpDown;
+
+  _PlayerSprites({
+    required this.run,
+    required this.attack,
+    required this.idle,
+    required this.jumpUp,
+    required this.jumpDown,
+  });
+}
+
 /// Battle player component with jump, attack, and shield mechanics.
 ///
 /// Features:
@@ -24,7 +41,7 @@ enum BattlePlayerState {
 /// - Ground and aerial attacks
 /// - Shield blocking
 /// - Gravity and ground collision
-class BattlePlayer extends PositionComponent with CollisionCallbacks {
+class BattlePlayer extends PositionComponent with CollisionCallbacks, HasGameReference {
   BattlePlayer({
     required Vector2 position,
     required this.groundY,
@@ -78,6 +95,7 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
 
   /// Whether player is facing right
   bool facingRight = true;
+  bool _lastFacingRight = true;
 
   /// Current HP
   int hp = GameConfig.playerBaseHp;
@@ -95,32 +113,107 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
   VoidCallback? onLand;
 
   // Visual components
-  late RectangleComponent _visual;
-  late RectangleComponent _shieldVisual;
+  late CircleComponent _shieldVisual;
+  late CircleComponent _shieldBorder;
+  _PlayerSprites? _sprites;
+  SpriteComponent? _currentSprite;
+  SpriteAnimationComponent? _currentAnimation;
+  BattlePlayerState _displayedState = BattlePlayerState.idle;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Player visual (placeholder)
-    _visual = RectangleComponent(
-      size: size,
-      paint: Paint()..color = AppColors.primary,
-      anchor: Anchor.bottomCenter,
-    );
-    add(_visual);
+    // Try to load sprites, fall back to placeholder if not available
+    try {
+      final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
+      // Spritesheet: 600x636px, actual sprite area: 504x600px, 6 columns x 4 rows with spacing
+      // Frame size: 504÷6 = 84px width, 100px height
+      // Row offset: 160px (100px frame + 60px spacing)
+      const frameWidth = 84.0;
+      const frameHeight = 100.0;
+      const rowOffset = 160.0;
 
-    // Shield visual (hidden by default)
-    _shieldVisual = RectangleComponent(
-      size: Vector2(size.x * 1.5, size.y * 1.2),
-      position: Vector2(-size.x * 0.25, -size.y * 0.1),
+      // Create run animation (row 0, frames 0-5)
+      final runFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 0),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Create attack animation (row 2, "RUN AND SHOOT", frames 0-5)
+      final attackFrames = List.generate(6, (i) {
+        return Sprite(
+          spriteSheet,
+          srcPosition: Vector2(i * frameWidth, 2 * rowOffset),
+          srcSize: Vector2(frameWidth, frameHeight),
+        );
+      });
+
+      // Jump sprites (row 1)
+      final jumpUp = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(0, rowOffset),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+      final jumpDown = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(frameWidth, rowOffset),
+        srcSize: Vector2(frameWidth, frameHeight),
+      );
+
+      _sprites = _PlayerSprites(
+        run: SpriteAnimation.spriteList(runFrames, stepTime: 0.1),
+        attack: SpriteAnimation.spriteList(attackFrames, stepTime: 0.05),
+        idle: runFrames[0],
+        jumpUp: jumpUp,
+        jumpDown: jumpDown,
+      );
+
+      // Start with idle sprite (with initial scale)
+      final scaleX = facingRight ? 1.0 : -1.0;
+      _currentSprite = SpriteComponent(
+        sprite: _sprites!.idle,
+        size: size,
+        position: Vector2(size.x / 2, size.y),
+        anchor: Anchor.bottomCenter,
+        scale: Vector2(scaleX, 1),
+      );
+      add(_currentSprite!);
+    } catch (e) {
+      // Fall back to placeholder rectangle (for tests or missing assets)
+      add(RectangleComponent(
+        size: size,
+        paint: Paint()..color = AppColors.primary,
+        anchor: Anchor.bottomCenter,
+      ));
+    }
+
+    // Shield visual (hidden by default) - circular bubble shield with glow
+    final shieldRadius = size.y * 0.7;
+    _shieldVisual = CircleComponent(
+      radius: shieldRadius,
+      position: Vector2(size.x / 2, size.y / 2),
       paint: Paint()
-        ..color = Colors.blue.withValues(alpha: 0.0)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-      anchor: Anchor.bottomLeft,
+        ..color = Colors.cyan.withValues(alpha: 0.0)
+        ..style = PaintingStyle.fill,
+      anchor: Anchor.center,
     );
     add(_shieldVisual);
+
+    // Shield border (outline)
+    _shieldBorder = CircleComponent(
+      radius: shieldRadius,
+      position: Vector2(size.x / 2, size.y / 2),
+      paint: Paint()
+        ..color = Colors.cyanAccent.withValues(alpha: 0.0)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+      anchor: Anchor.center,
+    );
+    add(_shieldBorder);
 
     // Add hitbox
     add(
@@ -242,9 +335,12 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
       state = isGrounded ? BattlePlayerState.attacking : BattlePlayerState.aerialAttacking;
     } else if (isShielding) {
       state = BattlePlayerState.shielding;
-    } else if (!isGrounded) {
+    } else if (!isGrounded && velocity.y.abs() > 20) {
+      // Only show jumping/falling when vertical velocity is significant
+      // This prevents jittering during landing transitions
       state = velocity.y < 0 ? BattlePlayerState.jumping : BattlePlayerState.falling;
-    } else if (velocity.x.abs() > 1) {
+    } else if (velocity.x.abs() > 5) {
+      // Use higher threshold to prevent jittering between idle and walking
       state = BattlePlayerState.walking;
     } else {
       state = BattlePlayerState.idle;
@@ -252,25 +348,114 @@ class BattlePlayer extends PositionComponent with CollisionCallbacks {
   }
 
   void _updateVisuals() {
-    // Flip sprite based on direction
-    if (facingRight) {
-      _visual.scale = Vector2(1, 1);
-    } else {
-      _visual.scale = Vector2(-1, 1);
+    if (_sprites == null) return;
+
+    // Determine which visual to show based on state
+    final stateChanged = state != _displayedState;
+    if (stateChanged) {
+      _displayedState = state;
+      _switchVisual();
     }
 
-    // Invincibility flash
+    // Flip sprite based on direction (only when direction changes or state changed)
+    final directionChanged = facingRight != _lastFacingRight;
+    if (stateChanged || directionChanged) {
+      final scaleX = facingRight ? 1.0 : -1.0;
+      _currentSprite?.scale = Vector2(scaleX, 1);
+      _currentAnimation?.scale = Vector2(scaleX, 1);
+      _lastFacingRight = facingRight;
+    }
+
+    // Invincibility flash (reduce opacity)
     if (isInvincible) {
       final flash = (invincibilityTimer * 10).floor() % 2 == 0;
-      _visual.paint.color = flash ? AppColors.primary : AppColors.primaryLight;
+      final opacity = flash ? 1.0 : 0.5;
+      _currentSprite?.paint.color = Colors.white.withValues(alpha: opacity);
+      _currentAnimation?.paint.color = Colors.white.withValues(alpha: opacity);
     } else {
-      _visual.paint.color = AppColors.primary;
+      _currentSprite?.paint.color = Colors.white;
+      _currentAnimation?.paint.color = Colors.white;
     }
 
-    // Shield visual
+    // Shield visual (bubble with glow effect)
     _shieldVisual.paint.color = isShielding
-        ? Colors.blue.withValues(alpha: 0.5)
-        : Colors.blue.withValues(alpha: 0.0);
+        ? Colors.cyan.withValues(alpha: 0.3)
+        : Colors.cyan.withValues(alpha: 0.0);
+    _shieldBorder.paint.color = isShielding
+        ? Colors.cyanAccent.withValues(alpha: 0.8)
+        : Colors.cyanAccent.withValues(alpha: 0.0);
+  }
+
+  void _switchVisual() {
+    if (_sprites == null) return;
+
+    // Always remove both visuals first to avoid overlap
+    _currentSprite?.removeFromParent();
+    _currentAnimation?.removeFromParent();
+    _currentSprite = null;
+    _currentAnimation = null;
+
+    // Set initial scale based on facing direction
+    final scaleX = facingRight ? 1.0 : -1.0;
+    final initialScale = Vector2(scaleX, 1);
+    final spritePosition = Vector2(size.x / 2, size.y);
+
+    // Add new visual based on state
+    switch (state) {
+      case BattlePlayerState.walking:
+        _currentAnimation = SpriteAnimationComponent(
+          animation: _sprites!.run,
+          size: size,
+          position: spritePosition,
+          anchor: Anchor.bottomCenter,
+          scale: initialScale,
+        );
+        add(_currentAnimation!);
+        break;
+      case BattlePlayerState.attacking:
+      case BattlePlayerState.aerialAttacking:
+        _currentAnimation = SpriteAnimationComponent(
+          animation: _sprites!.attack,
+          size: size,
+          position: spritePosition,
+          anchor: Anchor.bottomCenter,
+          scale: initialScale,
+        );
+        add(_currentAnimation!);
+        break;
+      case BattlePlayerState.jumping:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.jumpUp,
+          size: size,
+          position: spritePosition,
+          anchor: Anchor.bottomCenter,
+          scale: initialScale,
+        );
+        add(_currentSprite!);
+        break;
+      case BattlePlayerState.falling:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.jumpDown,
+          size: size,
+          position: spritePosition,
+          anchor: Anchor.bottomCenter,
+          scale: initialScale,
+        );
+        add(_currentSprite!);
+        break;
+      case BattlePlayerState.idle:
+      case BattlePlayerState.shielding:
+      case BattlePlayerState.hurt:
+        _currentSprite = SpriteComponent(
+          sprite: _sprites!.idle,
+          size: size,
+          position: spritePosition,
+          anchor: Anchor.bottomCenter,
+          scale: initialScale,
+        );
+        add(_currentSprite!);
+        break;
+    }
   }
 
   /// Start jump (call when button pressed)

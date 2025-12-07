@@ -173,7 +173,7 @@ class AttackSlashEffect extends ParticleEffect {
     this.isAerial = false,
   }) : super(
           position: position,
-          duration: 0.2,
+          duration: 0.3,
         );
 
   final bool facingRight;
@@ -186,21 +186,31 @@ class AttackSlashEffect extends ParticleEffect {
     final direction = facingRight ? 1.0 : -1.0;
     final slashAngle = isAerial ? -pi / 6 : 0.0;
 
-    // Draw arc slash
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: (1 - progress) * 0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4 * (1 - progress * 0.5)
-      ..strokeCap = StrokeCap.round;
-
     final rect = Rect.fromCenter(
-      center: Offset(direction * 20, 0),
-      width: 60 + progress * 20,
-      height: 40 + progress * 10,
+      center: Offset(direction * 25, 0),
+      width: 80 + progress * 30,
+      height: 60 + progress * 20,
     );
 
     final startAngle = facingRight ? -pi / 3 + slashAngle : pi * 2 / 3 + slashAngle;
     final sweepAngle = (facingRight ? 1 : -1) * pi / 2 * (1 - progress * 0.3);
+
+    // Draw outer glow (yellow)
+    final glowPaint = Paint()
+      ..color = Colors.yellow.withValues(alpha: (1 - progress) * 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12 * (1 - progress * 0.5)
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
+    canvas.drawArc(rect, startAngle, sweepAngle, false, glowPaint);
+
+    // Draw main slash (bright white, thicker)
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: (1 - progress) * 0.95)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8 * (1 - progress * 0.5)
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
   }

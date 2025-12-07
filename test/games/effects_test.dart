@@ -52,7 +52,7 @@ void main() {
         position: Vector2.zero(),
         facingRight: true,
       );
-      expect(effect.duration, equals(0.2));
+      expect(effect.duration, equals(0.3));
     });
 
     test('should accept isAerial parameter', () {
