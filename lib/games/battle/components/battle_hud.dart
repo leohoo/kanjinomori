@@ -18,10 +18,10 @@ class BattleHud extends PositionComponent {
   double enemyHpPercent = 1.0;
 
   /// Player name
-  String playerName = 'Player';
+  String _playerName = 'Player';
 
   /// Enemy name
-  String enemyName = 'Boss';
+  String _enemyName = 'Boss';
 
   // HP bar components
   late RectangleComponent _playerHpBackground;
@@ -29,14 +29,60 @@ class BattleHud extends PositionComponent {
   late RectangleComponent _enemyHpBackground;
   late RectangleComponent _enemyHpBar;
 
+  // Cached text painters for performance
+  final TextPainter _playerNamePainter = TextPainter(
+    textDirection: TextDirection.ltr,
+  );
+  final TextPainter _enemyNamePainter = TextPainter(
+    textDirection: TextDirection.ltr,
+  );
+
+  // Text style
+  static const _labelStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    shadows: [Shadow(color: Colors.black, blurRadius: 2)],
+  );
+
   // Constants
   static const double barWidth = 200;
   static const double barHeight = 20;
   static const double padding = 16;
 
+  String get playerName => _playerName;
+  set playerName(String value) {
+    if (_playerName != value) {
+      _playerName = value;
+      _updatePlayerNamePainter();
+    }
+  }
+
+  String get enemyName => _enemyName;
+  set enemyName(String value) {
+    if (_enemyName != value) {
+      _enemyName = value;
+      _updateEnemyNamePainter();
+    }
+  }
+
+  void _updatePlayerNamePainter() {
+    _playerNamePainter.text = TextSpan(text: _playerName, style: _labelStyle);
+    _playerNamePainter.layout();
+  }
+
+  void _updateEnemyNamePainter() {
+    _enemyNamePainter.text = TextSpan(text: _enemyName, style: _labelStyle);
+    _enemyNamePainter.layout();
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    // Initialize text painters
+    _updatePlayerNamePainter();
+    _updateEnemyNamePainter();
 
     // Player HP bar (left side)
     _playerHpBackground = RectangleComponent(
@@ -92,38 +138,11 @@ class BattleHud extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Draw labels
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-    );
-
-    // Player name
-    textPainter.text = TextSpan(
-      text: playerName,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        shadows: [Shadow(color: Colors.black, blurRadius: 2)],
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(padding, padding + barHeight + 4));
-
-    // Enemy name
-    textPainter.text = TextSpan(
-      text: enemyName,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        shadows: [Shadow(color: Colors.black, blurRadius: 2)],
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(
+    // Draw cached labels
+    _playerNamePainter.paint(canvas, Offset(padding, padding + barHeight + 4));
+    _enemyNamePainter.paint(
       canvas,
-      Offset(screenSize.x - padding - textPainter.width, padding + barHeight + 4),
+      Offset(screenSize.x - padding - _enemyNamePainter.width, padding + barHeight + 4),
     );
   }
 

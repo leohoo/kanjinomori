@@ -197,9 +197,9 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
   void _handleIdleState(double distanceToPlayer) {
     if (stateTimer <= 0) {
       // Decide next action
-      if (distanceToPlayer > 200) {
+      if (distanceToPlayer > GamePhysics.enemyApproachDistance) {
         _transitionToState(EnemyState.approach);
-      } else if (distanceToPlayer < 80) {
+      } else if (distanceToPlayer < GamePhysics.enemyRetreatDistance) {
         _transitionToState(EnemyState.retreat);
       } else if (attackCooldown <= 0) {
         _startAttack(false);
@@ -212,7 +212,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
     final direction = facingRight ? 1.0 : -1.0;
     velocity.x = direction * GamePhysics.playerSpeed * 0.7 * difficulty;
 
-    if (distanceToPlayer < 100) {
+    if (distanceToPlayer < GamePhysics.enemyAttackRange) {
       velocity.x = 0;
       if (attackCooldown <= 0) {
         _startAttack(false);
@@ -227,7 +227,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
     final direction = facingRight ? -1.0 : 1.0;
     velocity.x = direction * GamePhysics.playerSpeed * 0.5;
 
-    if (distanceToPlayer > 150 || stateTimer <= 0) {
+    if (distanceToPlayer > GamePhysics.enemySafeDistance || stateTimer <= 0) {
       velocity.x = 0;
       _transitionToState(EnemyState.idle);
     }
@@ -328,6 +328,8 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks {
 
   void _updateVisuals() {
     // Flip based on direction
+    // TODO(Phase 4): Replace scale.x=-1 with flipHorizontallyAroundCenter()
+    // when adding actual sprites, as negative scale may not render correctly.
     if (facingRight) {
       _visual.scale = Vector2(1, 1);
     } else {
