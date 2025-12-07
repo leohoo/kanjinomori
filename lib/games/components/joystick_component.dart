@@ -42,24 +42,26 @@ class SpriteJoystick extends JoystickComponent {
       final knobSprite = Sprite(knobImage);
 
       // Replace background with sprite
-      background?.removeFromParent();
+      final oldBackground = background;
       final spriteBackground = SpriteComponent(
         sprite: baseSprite,
         size: Vector2.all(_baseSize),
         anchor: Anchor.center,
       );
+      background = spriteBackground;
       add(spriteBackground);
+      oldBackground?.removeFromParent();
 
       // Replace knob with sprite
-      knob?.removeFromParent();
+      final oldKnob = knob;
       final spriteKnob = SpriteComponent(
         sprite: knobSprite,
         size: Vector2.all(_knobSize),
         anchor: Anchor.center,
       );
-      // Add as new knob - position will be updated by JoystickComponent
       knob = spriteKnob;
       add(spriteKnob);
+      oldKnob?.removeFromParent();
     } catch (e) {
       // Keep placeholder circles if sprites fail to load
       debugPrint('Failed to load joystick sprites: $e');
