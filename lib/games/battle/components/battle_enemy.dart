@@ -187,6 +187,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
       _currentAnimation = SpriteAnimationComponent(
         animation: _sprites!.idle,
         size: size,
+        position: Vector2(size.x / 2, size.y),
         anchor: Anchor.bottomCenter,
       );
       add(_currentAnimation!);
@@ -202,7 +203,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     // Telegraph indicator (hidden by default)
     _telegraphIndicator = RectangleComponent(
       size: Vector2(size.x * 0.8, 8),
-      position: Vector2(size.x * 0.1, -size.y - 10),
+      position: Vector2(size.x * 0.1, -10),
       paint: Paint()..color = Colors.red.withValues(alpha: 0.0),
       anchor: Anchor.bottomLeft,
     );
@@ -467,6 +468,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     _currentAnimation = SpriteAnimationComponent(
       animation: animation,
       size: size,
+      position: Vector2(size.x / 2, size.y),
       anchor: Anchor.bottomCenter,
     );
     add(_currentAnimation!);
@@ -480,6 +482,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     _currentAnimation = SpriteAnimationComponent(
       animation: _sprites!.death,
       size: size,
+      position: Vector2(size.x / 2, size.y),
       anchor: Anchor.bottomCenter,
       removeOnFinish: true,
     );

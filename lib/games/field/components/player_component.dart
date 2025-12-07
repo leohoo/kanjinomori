@@ -69,13 +69,15 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     try {
       // Load runner spritesheet
       // The spritesheet has: RUN (6 frames), JUMP (2+2 frames), RUN_AND_SHOOT (6 frames)
-      // Frame size is approximately 100x100
+      // Spritesheet: 600x636px, actual sprite area: 504x600px, 6 columns x 4 rows with spacing
       final spriteSheet = await game.images.load('sprites/player/runner_spritesheet.png');
 
-      // Create run animation from first row (6 frames, ~100x100 each)
-      // Adjust these values based on actual sprite dimensions
-      const frameWidth = 100.0;
+      // Create run animation from first row (6 frames)
+      // Frame size: 504÷6 = 84px width, 100px height
+      // Row offset: 160px (100px frame + 60px spacing)
+      const frameWidth = 84.0;
       const frameHeight = 100.0;
+      const rowOffset = 160.0;
 
       final runFrames = List.generate(6, (i) {
         return Sprite(

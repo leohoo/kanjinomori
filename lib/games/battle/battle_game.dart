@@ -78,7 +78,7 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     await super.onLoad();
 
     // Setup arena
-    groundY = size.y * 0.8;
+    groundY = size.y * 0.88; // Move ground lower to match visual
     leftBound = 50;
     rightBound = size.x - 50;
 
@@ -86,13 +86,25 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     final world = World();
     add(world);
 
-    // Draw ground
+    // Add background gradient sky
+    final backgroundGradient = _GradientBackground(size: size);
+    world.add(backgroundGradient);
+
+    // Draw ground with grass texture effect
     final ground = RectangleComponent(
       position: Vector2(0, groundY),
       size: Vector2(size.x, size.y - groundY),
       paint: Paint()..color = AppColors.secondaryDark,
     );
     world.add(ground);
+
+    // Add ground edge/horizon line
+    final groundEdge = RectangleComponent(
+      position: Vector2(0, groundY - 3),
+      size: Vector2(size.x, 3),
+      paint: Paint()..color = const Color(0xFF558B2F),
+    );
+    world.add(groundEdge);
 
     // Create player
     player = BattlePlayer(
@@ -290,5 +302,52 @@ class BattleGame extends FlameGame with HasCollisionDetection {
   }
 
   @override
-  Color backgroundColor() => AppColors.background;
+  Color backgroundColor() => const Color(0xFF87CEEB); // Sky blue
+}
+
+/// Gradient background for battle scene
+class _GradientBackground extends PositionComponent {
+  _GradientBackground({required Vector2 size})
+      : super(
+          size: size,
+          position: Vector2.zero(),
+        );
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    // Draw gradient sky (light blue to darker blue)
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        const Color(0xFF87CEEB), // Light sky blue
+        const Color(0xFFB0E0E6), // Powder blue
+        const Color(0xFFE6F5E6), // Very light green (horizon)
+      ],
+      stops: const [0.0, 0.6, 1.0],
+    );
+
+    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+    final paint = Paint()..shader = gradient.createShader(rect);
+
+    canvas.drawRect(rect, paint);
+
+    // Draw simple clouds
+    _drawCloud(canvas, size.x * 0.2, size.y * 0.15, 60);
+    _drawCloud(canvas, size.x * 0.6, size.y * 0.25, 80);
+    _drawCloud(canvas, size.x * 0.85, size.y * 0.12, 50);
+  }
+
+  void _drawCloud(Canvas canvas, double x, double y, double size) {
+    final cloudPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+
+    // Draw 3 overlapping circles for cloud shape
+    canvas.drawCircle(Offset(x, y), size * 0.4, cloudPaint);
+    canvas.drawCircle(Offset(x + size * 0.3, y), size * 0.5, cloudPaint);
+    canvas.drawCircle(Offset(x + size * 0.6, y + size * 0.1), size * 0.35, cloudPaint);
+  }
 }

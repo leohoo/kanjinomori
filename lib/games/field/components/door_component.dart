@@ -60,13 +60,13 @@ class DoorComponent extends PositionComponent with CollisionCallbacks, HasGameRe
     // Try to load portal sprites, fall back to placeholder if not available
     try {
       // Load portal spritesheet
-      // portal1.png has animated frames in a grid layout
+      // portal1.png: 128x160px with animated frames in a grid layout
       final portalSheet = await game.images.load('sprites/door/portal1.png');
 
-      // The portal sprite sheet appears to have multiple frames
-      // Create animation from the frames
-      const frameWidth = 64.0;
-      const frameHeight = 64.0;
+      // Spritesheet: 128x160px, 4 columns x 5 rows (16 frames, 4 empty)
+      // Frame size: 128÷4 = 32px width, 160÷5 = 32px height
+      const frameWidth = 32.0;
+      const frameHeight = 32.0;
       const columns = 4;
       const rows = 4;
 
