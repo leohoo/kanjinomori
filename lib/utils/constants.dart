@@ -97,6 +97,18 @@ class GamePhysics {
   // Effects (seconds)
   static const double jumpWindEffectDuration = 0.35;
   static const double landingDustDuration = 0.2;
+
+  // Enemy AI distances (pixels)
+  static const double enemyApproachDistance = 200.0;
+  static const double enemyRetreatDistance = 80.0;
+  static const double enemyAttackRange = 100.0;
+  static const double enemySafeDistance = 150.0;
+
+  // Knockback velocities (pixels/sec)
+  static const double knockbackHorizontal = 80.0;
+  static const double knockbackVertical = 100.0;
+  static const double playerKnockbackHorizontal = 100.0;
+  static const double playerKnockbackVertical = 150.0;
 }
 
 /// Tile and sprite sizes for isometric rendering
