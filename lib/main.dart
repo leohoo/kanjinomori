@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'games/coordinator/stage_coordinator_screen.dart';
 import 'models/kanji.dart';
 import 'models/player.dart';
 import 'providers/providers.dart';
@@ -83,12 +84,12 @@ class GameNavigator extends ConsumerWidget {
     // Route to appropriate screen
     return AnimatedSwitcher(
       duration: AppDurations.transitionDuration,
-      child: _getScreen(gameState.currentScreen),
+      child: _getScreen(context, ref, gameState),
     );
   }
 
-  Widget _getScreen(GameScreen screen) {
-    switch (screen) {
+  Widget _getScreen(BuildContext context, WidgetRef ref, GameState gameState) {
+    switch (gameState.currentScreen) {
       case GameScreen.home:
         return const HomeScreen();
       case GameScreen.stageSelect:
@@ -96,9 +97,7 @@ class GameNavigator extends ConsumerWidget {
       case GameScreen.stage:
         return const StageScreen();
       case GameScreen.field:
-        // Field mode uses StageCoordinatorScreen, handled separately
-        // For now, redirect to legacy stage screen
-        return const StageScreen();
+        return _buildFieldScreen(ref, gameState);
       case GameScreen.question:
         return const QuestionScreen();
       case GameScreen.battle:
@@ -110,5 +109,23 @@ class GameNavigator extends ConsumerWidget {
       case GameScreen.shop:
         return const ShopScreen();
     }
+  }
+
+  Widget _buildFieldScreen(WidgetRef ref, GameState gameState) {
+    final stage = gameState.currentStage;
+    final progress = gameState.stageProgress;
+
+    if (stage == null || progress == null) {
+      // Fallback to home if state is invalid
+      return const HomeScreen();
+    }
+
+    return StageCoordinatorScreen(
+      stage: stage,
+      questions: progress.questions,
+      onStageComplete: (victory, coinsEarned) {
+        ref.read(gameProvider.notifier).completeFieldStage(victory, coinsEarned);
+      },
+    );
   }
 }
