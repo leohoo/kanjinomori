@@ -74,10 +74,8 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
       // Create run animation from first row (6 frames)
       // Frame size: 504÷6 = 84px width, 100px height
-      // Row offset: 160px (100px frame + 60px spacing)
       const frameWidth = 84.0;
       const frameHeight = 100.0;
-      const rowOffset = 160.0;
 
       final runFrames = List.generate(6, (i) {
         return Sprite(
