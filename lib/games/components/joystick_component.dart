@@ -5,14 +5,13 @@ import '../../utils/constants.dart';
 /// Sprite-based joystick using Kenney Mobile Controls assets.
 /// Falls back to basic circles if sprites fail to load.
 class SpriteJoystick extends JoystickComponent {
+  // Note: Sprite loading disabled - Kenney joystick sprites are dark and
+  // invisible against dark backgrounds. Using white translucent circles instead.
   SpriteJoystick({
     super.position,
     double? size,
     double? knobSize,
-  })  : _baseSize = size ?? GameSizes.joystickSize,
-        _knobSize = knobSize ?? GameSizes.joystickKnobSize,
-        super(
-          // Use placeholder circles initially
+  }) : super(
           knob: CircleComponent(
             radius: (knobSize ?? GameSizes.joystickKnobSize) / 2,
             paint: Paint()
@@ -26,47 +25,6 @@ class SpriteJoystick extends JoystickComponent {
               ..style = PaintingStyle.fill,
           ),
         );
-
-  final double _baseSize;
-  final double _knobSize;
-
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-
-    try {
-      // Load sprite assets (JoystickComponent already has HasGameReference)
-      final baseImage = await game.images.load('ui/joystick_base.png');
-      final knobImage = await game.images.load('ui/joystick_knob.png');
-      final baseSprite = Sprite(baseImage);
-      final knobSprite = Sprite(knobImage);
-
-      // Replace background with sprite
-      final oldBackground = background;
-      final spriteBackground = SpriteComponent(
-        sprite: baseSprite,
-        size: Vector2.all(_baseSize),
-        anchor: Anchor.center,
-      );
-      background = spriteBackground;
-      add(spriteBackground);
-      oldBackground?.removeFromParent();
-
-      // Replace knob with sprite
-      final oldKnob = knob;
-      final spriteKnob = SpriteComponent(
-        sprite: knobSprite,
-        size: Vector2.all(_knobSize),
-        anchor: Anchor.center,
-      );
-      knob = spriteKnob;
-      add(spriteKnob);
-      oldKnob?.removeFromParent();
-    } catch (e) {
-      // Keep placeholder circles if sprites fail to load
-      debugPrint('Failed to load joystick sprites: $e');
-    }
-  }
 
   /// Returns the joystick direction with dead zone applied.
   Vector2 get directionWithDeadZone {
