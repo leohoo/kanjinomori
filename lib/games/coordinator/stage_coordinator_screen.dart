@@ -5,6 +5,7 @@ import '../../providers/kanji_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/stroke_grader.dart';
 import '../../widgets/kanji_canvas.dart';
+import '../../widgets/trace_along_overlay.dart';
 import '../field/field_screen.dart';
 import '../battle/battle_game.dart' as battle;
 import '../battle/battle_screen.dart';
@@ -452,64 +453,7 @@ class _StageCoordinatorScreenState extends ConsumerState<StageCoordinatorScreen>
 
               // Show canvas or feedback
               if (!_showingFeedback) ...[
-                // Instruction
-                Text(
-                  _attemptNumber == 1
-                      ? 'この漢字を書いてください'
-                      : 'もう一度書いてみよう',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Canvas for writing
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final screenWidth = MediaQuery.of(context).size.width;
-                    final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
-                    return KanjiCanvas(
-                      key: _canvasKey,
-                      size: canvasSize,
-                      strokeWidth: 8.0,
-                      onChanged: () {
-                        setState(() {
-                          _hasStrokes = _canvasKey.currentState?.hasStrokes ?? false;
-                        });
-                      },
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => _canvasKey.currentState?.clear(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('やり直し'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      onPressed: _hasStrokes ? () => _checkWritingAnswer(question) : null,
-                      icon: const Icon(Icons.check),
-                      label: const Text('確認'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
+                _buildWritingInput(question),
               ] else ...[
                 // Feedback display
                 _buildWritingFeedback(question),
@@ -520,6 +464,118 @@ class _StageCoordinatorScreenState extends ConsumerState<StageCoordinatorScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWritingInput(KanjiQuestion question) {
+    final kanjiRepo = ref.watch(kanjiRepositoryProvider);
+    final template = kanjiRepo.getStrokeTemplate(question.kanji.kanji);
+    final isTraceMode = _attemptNumber == 3 && template != null;
+
+    if (isTraceMode) {
+      // Trace mode (3rd attempt) - なぞり書き
+      return Column(
+        children: [
+          const Text(
+            'なぞって書こう',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
+              return TraceAlongOverlay(
+                templateStrokes: template,
+                size: canvasSize,
+                onComplete: (success) => _handleTraceComplete(success, question),
+              );
+            },
+          ),
+        ],
+      );
+    } else {
+      // Normal writing mode (1st or 2nd attempt)
+      return Column(
+        children: [
+          Text(
+            _attemptNumber == 1
+                ? 'この漢字を書いてください'
+                : 'もう一度書いてみよう',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final canvasSize = (screenWidth * 0.75).clamp(250.0, 350.0);
+              return KanjiCanvas(
+                key: _canvasKey,
+                size: canvasSize,
+                strokeWidth: 8.0,
+                onChanged: () {
+                  setState(() {
+                    _hasStrokes = _canvasKey.currentState?.hasStrokes ?? false;
+                  });
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _canvasKey.currentState?.clear(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('やり直し'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: _hasStrokes ? () => _checkWritingAnswer(question) : null,
+                icon: const Icon(Icons.check),
+                label: const Text('確認'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+  }
+
+  void _handleTraceComplete(bool success, KanjiQuestion question) {
+    setState(() {
+      _showingFeedback = true;
+      _lastAnswerCorrect = success;
+      _failureReason = null;
+      _showRetryOption = false;
+    });
+
+    _feedbackAnimController.forward();
+
+    // Auto-proceed after delay
+    Future.delayed(
+      success
+          ? const Duration(milliseconds: 1200)
+          : const Duration(milliseconds: 1500),
+      () {
+        if (!mounted) return;
+        _completeQuestion(success);
+      },
     );
   }
 
@@ -580,7 +636,7 @@ class _StageCoordinatorScreenState extends ConsumerState<StageCoordinatorScreen>
                   Text(
                     _attemptNumber == 1
                         ? 'もう一度挑戦しますか？'
-                        : 'もう一度挑戦しますか？',
+                        : 'なぞり書きで練習しますか？',
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -600,8 +656,8 @@ class _StageCoordinatorScreenState extends ConsumerState<StageCoordinatorScreen>
                       const SizedBox(width: 12),
                       ElevatedButton.icon(
                         onPressed: _handleRetry,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('もう一度'),
+                        icon: Icon(_attemptNumber == 1 ? Icons.refresh : Icons.gesture),
+                        label: Text(_attemptNumber == 1 ? 'もう一度' : 'なぞり書き'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           foregroundColor: Colors.black87,
