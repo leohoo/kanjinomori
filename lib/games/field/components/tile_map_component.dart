@@ -60,6 +60,9 @@ class TileMapComponent extends PositionComponent {
       (y) => List.generate(mapWidth, (x) => TileType.grass),
     );
 
+    // Generate door positions FIRST so we can avoid placing obstacles near them
+    _generateDoorPositions();
+
     // Add some random trees and decorations
     for (int y = 0; y < mapHeight; y++) {
       for (int x = 0; x < mapWidth; x++) {
@@ -79,9 +82,6 @@ class TileMapComponent extends PositionComponent {
         }
       }
     }
-
-    // Generate door positions (10 doors spread across the map)
-    _generateDoorPositions();
   }
 
   bool _isInSpawnArea(int x, int y) {

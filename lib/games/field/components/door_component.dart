@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
+import 'player_component.dart';
 
 /// Door state for visual appearance and interaction
 enum DoorState {
@@ -196,8 +197,7 @@ class DoorComponent extends PositionComponent with CollisionCallbacks {
     super.onCollisionStart(intersectionPoints, other);
 
     // When player touches available door, enter it
-    if (state == DoorState.available &&
-        other.runtimeType.toString().contains('Player')) {
+    if (state == DoorState.available && other is PlayerComponent) {
       enter();
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'field_game.dart';
 
@@ -8,6 +9,13 @@ import 'field_game.dart';
 /// - Door interaction callbacks
 /// - Navigation to question screens
 /// - Returning from questions with results
+///
+/// Usage:
+/// ```dart
+/// final fieldScreenKey = GlobalKey<FieldScreenState>();
+/// FieldScreen(key: fieldScreenKey, ...);
+/// // Later: fieldScreenKey.currentState?.onQuestionComplete(doorIndex, true);
+/// ```
 class FieldScreen extends StatefulWidget {
   const FieldScreen({
     super.key,
@@ -30,10 +38,11 @@ class FieldScreen extends StatefulWidget {
   final List<int> completedDoors;
 
   @override
-  State<FieldScreen> createState() => _FieldScreenState();
+  State<FieldScreen> createState() => FieldScreenState();
 }
 
-class _FieldScreenState extends State<FieldScreen> {
+/// Public state class to allow external access via GlobalKey.
+class FieldScreenState extends State<FieldScreen> {
   late FieldGame _game;
 
   @override
@@ -53,8 +62,8 @@ class _FieldScreenState extends State<FieldScreen> {
   void didUpdateWidget(FieldScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Reinitialize game if completed doors changed
-    if (widget.completedDoors != oldWidget.completedDoors) {
+    // Reinitialize game if completed doors changed (compare contents, not reference)
+    if (!listEquals(widget.completedDoors, oldWidget.completedDoors)) {
       _initGame();
     }
   }
@@ -67,7 +76,8 @@ class _FieldScreenState extends State<FieldScreen> {
     widget.onDoorEnter(doorIndex);
   }
 
-  /// Called when returning from question screen
+  /// Called when returning from question screen.
+  /// Access via GlobalKey: `fieldScreenKey.currentState?.onQuestionComplete(doorIndex, true)`
   void onQuestionComplete(int doorIndex, bool correct) {
     // Resume game
     _game.resumeEngine();

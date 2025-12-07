@@ -2,6 +2,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/constants.dart';
+import 'door_component.dart';
 
 /// Player state for animation selection
 enum PlayerState {
@@ -171,7 +172,7 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
     super.onCollision(intersectionPoints, other);
 
     // Notify about door collision
-    if (other.runtimeType.toString().contains('Door')) {
+    if (other is DoorComponent) {
       onDoorCollision?.call(other);
     }
   }
@@ -179,13 +180,5 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks {
   /// Set movement input from joystick (values should be -1 to 1)
   void setMovementInput(Vector2 input) {
     movementInput = input.clone();
-  }
-
-  /// Convert world position to isometric screen position
-  Vector2 toIsometric(Vector2 worldPos) {
-    return Vector2(
-      (worldPos.x - worldPos.y) * GameSizes.tileWidth / 2,
-      (worldPos.x + worldPos.y) * GameSizes.tileHeight / 2,
-    );
   }
 }
