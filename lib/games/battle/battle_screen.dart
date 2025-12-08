@@ -17,8 +17,8 @@ class BattleScreen extends StatefulWidget {
     this.correctAnswerRatio = 0.5,
   });
 
-  /// Current stage ID
-  final String stageId;
+  /// Current stage ID (1-10)
+  final int stageId;
 
   /// Enemy display name
   final String enemyName;
@@ -51,6 +51,7 @@ class _BattleScreenState extends State<BattleScreen> {
       enemyName: widget.enemyName,
       difficulty: widget.difficulty,
       correctAnswerRatio: widget.correctAnswerRatio,
+      stageId: widget.stageId,
       onBattleEnd: _handleBattleEnd,
     );
   }

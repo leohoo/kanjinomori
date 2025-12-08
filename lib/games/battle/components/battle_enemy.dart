@@ -44,6 +44,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     required this.groundY,
     required this.playerRef,
     this.difficulty = 1.0,
+    this.stageId = 1,
   }) : super(
           position: position,
           size: Vector2(GameSizes.playerWidth * 1.2, GameSizes.playerHeight * 1.2),
@@ -58,6 +59,9 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
 
   /// Difficulty multiplier (affects damage, speed, reaction time)
   final double difficulty;
+
+  /// Stage ID (1-10, used for slime color selection)
+  final int stageId;
 
   /// Current velocity
   final Vector2 velocity = Vector2.zero();
@@ -125,8 +129,10 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     maxHp = (100 * difficulty).round();
     hp = maxHp;
 
-    // Pick slime color based on difficulty (green=easy, pink=hard, etc.)
-    _slimeColor = (difficulty * 3).clamp(0, 3).floor();
+    // Pick slime color based on stage (green=early, blue, pink, yellow=late)
+    // Stages: 1-3→Green(0), 4-6→Blue(1), 7-8→Pink(2), 9-10→Yellow(3)
+    const stageColors = [0, 0, 0, 1, 1, 1, 2, 2, 3, 3];
+    _slimeColor = stageColors[(stageId - 1).clamp(0, 9)];
 
     // Try to load sprites, fall back to placeholder if not available
     try {
@@ -138,7 +144,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
       const frameWidth = 32.0;
       const frameHeight = 32.0;
       const framesPerAnimation = 10;
-      final rowY = _slimeColor * frameHeight * 3; // 3 rows per color
+      final rowY = _slimeColor * frameHeight * 5; // 5 rows per color (idle, gesture, walk, attack, death)
 
       // Create idle animation
       final idleFrames = List.generate(framesPerAnimation, (i) {
@@ -288,7 +294,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
       } else if (distanceToPlayer < GamePhysics.enemyRetreatDistance) {
         _transitionToState(EnemyState.retreat);
       } else if (attackCooldown <= 0) {
-        _startAttack(false);
+        _startAttack();
       }
     }
   }
@@ -301,7 +307,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     if (distanceToPlayer < GamePhysics.enemyAttackRange) {
       velocity.x = 0;
       if (attackCooldown <= 0) {
-        _startAttack(false);
+        _startAttack();
       } else {
         _transitionToState(EnemyState.idle);
       }
@@ -328,7 +334,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
 
     if (!isGrounded && velocity.y > 0 && attackCooldown <= 0) {
       // Aerial attack on the way down
-      _startAttack(true);
+      _startAttack();
     }
 
     if (isGrounded && stateTimer <= 0) {
@@ -361,7 +367,7 @@ class BattleEnemy extends PositionComponent with CollisionCallbacks, HasGameRefe
     }
   }
 
-  void _startAttack(bool isAerial) {
+  void _startAttack() {
     state = EnemyState.attack;
     isTelegraphing = true;
     telegraphTimer = AppDurations.enemyTelegraph.inMilliseconds / 1000 / difficulty;

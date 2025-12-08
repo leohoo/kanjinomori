@@ -136,4 +136,14 @@ class GameSizes {
   static const double playerHitboxHeight = 48.0;
   static const double attackHitboxWidth = 40.0;
   static const double attackHitboxHeight = 32.0;
+
+  // Battle arena layout (as ratio of screen size)
+  static const double battleGroundRatio = 0.75;
+  static const double battleArenaPadding = 50.0;
+  static const double battlePlayerSpawnRatio = 0.25;
+  static const double battleEnemySpawnRatio = 0.75;
+
+  // Hitbox size multipliers for collision detection
+  static const double hitboxWidthRatio = 0.8;
+  static const double hitboxHeightRatio = 0.9;
 }

@@ -37,6 +37,7 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     this.enemyName = 'Boss',
     this.difficulty = 1.0,
     this.correctAnswerRatio = 0.5,
+    this.stageId = 1,
     this.onBattleEnd,
   });
 
@@ -48,6 +49,9 @@ class BattleGame extends FlameGame with HasCollisionDetection {
 
   /// Ratio of correct kanji answers (for damage bonus)
   final double correctAnswerRatio;
+
+  /// Stage ID (1-10, used for enemy color)
+  final int stageId;
 
   /// Callback when battle ends
   final void Function(BattleResult result)? onBattleEnd;
@@ -78,9 +82,9 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     await super.onLoad();
 
     // Setup arena
-    groundY = size.y * 0.88; // Move ground lower to match visual
-    leftBound = 50;
-    rightBound = size.x - 50;
+    groundY = size.y * GameSizes.battleGroundRatio;
+    leftBound = GameSizes.battleArenaPadding;
+    rightBound = size.x - GameSizes.battleArenaPadding;
 
     // Create world
     final world = World();
@@ -108,7 +112,7 @@ class BattleGame extends FlameGame with HasCollisionDetection {
 
     // Create player
     player = BattlePlayer(
-      position: Vector2(size.x * 0.25, groundY),
+      position: Vector2(size.x * GameSizes.battlePlayerSpawnRatio, groundY),
       groundY: groundY,
     );
     player.onAttack = _onPlayerAttack;
@@ -117,10 +121,11 @@ class BattleGame extends FlameGame with HasCollisionDetection {
 
     // Create enemy
     enemy = BattleEnemy(
-      position: Vector2(size.x * 0.75, groundY),
+      position: Vector2(size.x * GameSizes.battleEnemySpawnRatio, groundY),
       groundY: groundY,
       playerRef: player,
       difficulty: difficulty,
+      stageId: stageId,
     );
     enemy.onAttack = _onEnemyAttack;
     enemy.onDamage = _onEnemyDamage;
@@ -243,8 +248,8 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     // Check if enemy is hit
     final enemyBounds = Rect.fromCenter(
       center: Offset(enemy.position.x, enemy.position.y - enemy.size.y / 2),
-      width: enemy.size.x * 0.8,
-      height: enemy.size.y * 0.9,
+      width: enemy.size.x * GameSizes.hitboxWidthRatio,
+      height: enemy.size.y * GameSizes.hitboxHeightRatio,
     );
 
     if (hitbox.overlaps(enemyBounds)) {
@@ -263,8 +268,8 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     // Check if player is hit
     final playerBounds = Rect.fromCenter(
       center: Offset(player.position.x, player.position.y - player.size.y / 2),
-      width: player.size.x * 0.8,
-      height: player.size.y * 0.9,
+      width: player.size.x * GameSizes.hitboxWidthRatio,
+      height: player.size.y * GameSizes.hitboxHeightRatio,
     );
 
     if (hitbox.overlaps(playerBounds)) {

@@ -152,7 +152,7 @@ class _StageCoordinatorScreenState
 
   Widget _buildBattleScreen() {
     return BattleScreen(
-      stageId: widget.stage.id.toString(),
+      stageId: widget.stage.id,
       enemyName: widget.stage.bossName,
       difficulty: _coordinator.difficulty,
       correctAnswerRatio: _coordinator.correctRatio,

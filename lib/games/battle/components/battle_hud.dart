@@ -46,9 +46,12 @@ class BattleHud extends PositionComponent {
   );
 
   // Constants
-  static const double barWidth = 200;
   static const double barHeight = 20;
   static const double padding = 16;
+  static const double barGap = 20;
+
+  // Dynamic bar width based on screen size
+  double get barWidth => (screenSize.x - padding * 2 - barGap) / 2;
 
   String get playerName => _playerName;
   set playerName(String value) {
