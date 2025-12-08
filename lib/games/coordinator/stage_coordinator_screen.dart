@@ -20,6 +20,7 @@ class StageCoordinatorScreen extends ConsumerStatefulWidget {
     required this.stage,
     required this.questions,
     required this.onStageComplete,
+    this.onBack,
   });
 
   /// Stage data
@@ -29,7 +30,10 @@ class StageCoordinatorScreen extends ConsumerStatefulWidget {
   final List<KanjiQuestion> questions;
 
   /// Callback when stage is complete
-  final void Function(bool victory, int coinsEarned) onStageComplete;
+  final void Function(bool victory, int questionCoins, int battleCoins) onStageComplete;
+
+  /// Callback when back button is pressed
+  final VoidCallback? onBack;
 
   @override
   ConsumerState<StageCoordinatorScreen> createState() =>
@@ -98,7 +102,11 @@ class _StageCoordinatorScreenState
   void _handleBattleEnd(battle.BattleResult result) {
     final victory = result == battle.BattleResult.victory;
     _coordinator.completeBattle(victory);
-    widget.onStageComplete(victory, _coordinator.coinsEarned);
+    widget.onStageComplete(
+      victory,
+      _coordinator.questionCoins,
+      _coordinator.battleCoins,
+    );
   }
 
   @override
@@ -123,6 +131,7 @@ class _StageCoordinatorScreenState
       completedDoors: _coordinator.completedDoors,
       onDoorEnter: _handleDoorEnter,
       onAllDoorsCompleted: _handleAllDoorsCompleted,
+      onBack: widget.onBack,
     );
   }
 

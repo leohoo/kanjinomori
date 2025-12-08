@@ -23,6 +23,7 @@ class FieldScreen extends StatefulWidget {
     required this.onDoorEnter,
     required this.onAllDoorsCompleted,
     this.completedDoors = const [],
+    this.onBack,
   });
 
   /// Current stage ID
@@ -36,6 +37,9 @@ class FieldScreen extends StatefulWidget {
 
   /// List of already completed door indices
   final List<int> completedDoors;
+
+  /// Callback when back button is pressed
+  final VoidCallback? onBack;
 
   @override
   State<FieldScreen> createState() => FieldScreenState();
@@ -111,7 +115,7 @@ class FieldScreenState extends State<FieldScreen> {
                   // Back button
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: widget.onBack ?? () => Navigator.of(context).pop(),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.black54,
                     ),

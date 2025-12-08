@@ -35,8 +35,14 @@ class GameCoordinator {
   /// Current game phase
   GamePhase phase = GamePhase.field;
 
-  /// Coins earned during this stage
-  int coinsEarned = 0;
+  /// Coins earned from questions
+  int questionCoins = 0;
+
+  /// Coins earned from battle
+  int battleCoins = 0;
+
+  /// Total coins earned during this stage
+  int get coinsEarned => questionCoins + battleCoins;
 
   /// Check if a specific door is completed
   bool isDoorCompleted(int index) {
@@ -102,14 +108,14 @@ class GameCoordinator {
 
     // Award coins for correct answer
     if (wasCorrect) {
-      coinsEarned += 5;
+      questionCoins += 5; // 5 coins per correct answer
     }
 
     // Check if all doors are done
     if (allDoorsCompleted) {
       // Award bonus if all correct
       if (correctCount == totalDoors) {
-        coinsEarned += 10;
+        questionCoins += 10; // Perfect bonus
       }
       phase = GamePhase.battle;
     } else {
@@ -125,6 +131,11 @@ class GameCoordinator {
   /// Complete the battle
   void completeBattle(bool victory) {
     phase = victory ? GamePhase.victory : GamePhase.defeat;
+
+    // Award coins for battle victory
+    if (victory) {
+      battleCoins = 30; // Base battle victory reward
+    }
   }
 
   /// Reset coordinator for a new attempt
@@ -136,7 +147,8 @@ class GameCoordinator {
     lastFieldPosition = null;
     activeDoorIndex = -1;
     phase = GamePhase.field;
-    coinsEarned = 0;
+    questionCoins = 0;
+    battleCoins = 0;
   }
 
   /// Save state for persistence
@@ -150,7 +162,8 @@ class GameCoordinator {
           : null,
       'activeDoorIndex': activeDoorIndex,
       'phase': phase.name,
-      'coinsEarned': coinsEarned,
+      'questionCoins': questionCoins,
+      'battleCoins': battleCoins,
     };
   }
 
@@ -177,7 +190,8 @@ class GameCoordinator {
 
     coordinator.activeDoorIndex = json['activeDoorIndex'] as int;
     coordinator.phase = GamePhase.values.byName(json['phase'] as String);
-    coordinator.coinsEarned = json['coinsEarned'] as int;
+    coordinator.questionCoins = json['questionCoins'] as int? ?? 0;
+    coordinator.battleCoins = json['battleCoins'] as int? ?? 0;
 
     return coordinator;
   }

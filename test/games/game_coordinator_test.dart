@@ -189,7 +189,8 @@ void main() {
         expect(json['doorCorrect'][0], isTrue);
         expect(json['lastFieldPosition']['x'], equals(100));
         expect(json['lastFieldPosition']['y'], equals(200));
-        expect(json['coinsEarned'], equals(5));
+        expect(json['questionCoins'], equals(5));
+        expect(json['battleCoins'], equals(0));
         expect(json['phase'], equals('field'));
       });
 

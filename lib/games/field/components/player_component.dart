@@ -189,15 +189,6 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
     if (previousState != state) {
       _updateAnimation();
     }
-
-    // Update facing direction
-    if (velocity.x.abs() > 0.1) {
-      final shouldFaceRight = velocity.x > 0;
-      if (_facingRight != shouldFaceRight) {
-        _facingRight = shouldFaceRight;
-        _updateSpriteFlip();
-      }
-    }
   }
 
   void _updateAnimation() {
@@ -221,17 +212,22 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   void _updateSpriteFlip() {
     final scaleX = _facingRight ? 1.0 : -1.0;
-    // Only update the sprite that's currently mounted
-    if (_idleSprite?.isMounted == true) {
-      _idleSprite?.scale = Vector2(scaleX, 1);
-    }
-    if (_runAnimation?.isMounted == true) {
-      _runAnimation?.scale = Vector2(scaleX, 1);
-    }
+    // Set scale on both sprites - scale persists even before mounting
+    _idleSprite?.scale = Vector2(scaleX, 1);
+    _runAnimation?.scale = Vector2(scaleX, 1);
   }
 
   void _updateDirection() {
     if (movementInput.length < 0.1) return;
+
+    // Update facing direction based on horizontal input
+    if (movementInput.x.abs() > 0.1) {
+      final shouldFaceRight = movementInput.x > 0;
+      if (_facingRight != shouldFaceRight) {
+        _facingRight = shouldFaceRight;
+        _updateSpriteFlip();
+      }
+    }
 
     // Determine 8-way direction from input
     final angle = movementInput.angleTo(Vector2(1, 0));

@@ -124,8 +124,11 @@ class GameNavigator extends ConsumerWidget {
     return StageCoordinatorScreen(
       stage: stage,
       questions: progress.questions,
-      onStageComplete: (victory, coinsEarned) {
-        ref.read(gameProvider.notifier).completeFieldStage(victory, coinsEarned);
+      onStageComplete: (victory, questionCoins, battleCoins) {
+        ref.read(gameProvider.notifier).completeFieldStage(victory, questionCoins, battleCoins);
+      },
+      onBack: () {
+        ref.read(gameProvider.notifier).goToStageSelect();
       },
     );
   }

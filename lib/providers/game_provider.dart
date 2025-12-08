@@ -116,32 +116,52 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   /// Handle field stage completion
-  void completeFieldStage(bool victory, int coinsEarned) {
+  void completeFieldStage(bool victory, int questionCoins, int battleCoins) {
     final stage = state.currentStage;
     if (stage == null) return;
+
+    final totalCoins = questionCoins + battleCoins;
 
     // Sync coins to stageProgress so VictoryScreen/DefeatScreen can display them
     final progress = state.stageProgress;
     if (progress != null) {
-      progress.coinsEarned = coinsEarned;
+      progress.coinsEarned = questionCoins; // Store question coins here
+    }
+
+    // Create a fake battle result to store battle coins for display
+    final fakeBattle = Battle(
+      playerName: 'Player',
+      playerHp: 100,
+      playerDamage: 10,
+      enemyName: stage.bossName,
+      enemyHp: 100,
+      enemyDamage: 15,
+    );
+    // Hack: Store battle coins in the battle's turn count for display
+    fakeBattle.turnCount = battleCoins;
+    if (victory) {
+      fakeBattle.state = BattleState.victory;
     }
 
     if (victory) {
       final playerNotifier = _ref.read(playerProvider.notifier);
-      playerNotifier.addCoins(coinsEarned);
-      playerNotifier.updateHighScore(stage.id, coinsEarned);
+      playerNotifier.addCoins(totalCoins);
+      playerNotifier.updateHighScore(stage.id, totalCoins);
 
       // Unlock next stage
       if (stage.id < Stage.allStages.length) {
         playerNotifier.unlockStage(stage.id + 1);
       }
 
-      state = state.copyWith(currentScreen: GameScreen.victory);
+      state = state.copyWith(
+        currentScreen: GameScreen.victory,
+        currentBattle: fakeBattle,
+      );
     } else {
       // Give partial coins on defeat
-      if (coinsEarned > 0) {
+      if (totalCoins > 0) {
         final playerNotifier = _ref.read(playerProvider.notifier);
-        playerNotifier.addCoins(coinsEarned ~/ 2);
+        playerNotifier.addCoins(totalCoins ~/ 2);
       }
       state = state.copyWith(currentScreen: GameScreen.defeat);
     }
