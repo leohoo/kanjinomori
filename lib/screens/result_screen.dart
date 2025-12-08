@@ -374,7 +374,7 @@ class DefeatScreen extends ConsumerWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            gameNotifier.startStage(stage?.id ?? 1);
+                            gameNotifier.startFieldStage(stage?.id ?? 1);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.accent,

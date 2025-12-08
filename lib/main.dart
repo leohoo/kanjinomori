@@ -95,14 +95,8 @@ class GameNavigator extends ConsumerWidget {
         return const HomeScreen();
       case GameScreen.stageSelect:
         return const StageSelectScreen();
-      case GameScreen.stage:
-        return const StageScreen();
       case GameScreen.field:
         return _buildFieldScreen(ref, gameState);
-      case GameScreen.question:
-        return const QuestionScreen();
-      case GameScreen.battle:
-        return const BattleScreen();
       case GameScreen.victory:
         return const VictoryScreen();
       case GameScreen.defeat:
