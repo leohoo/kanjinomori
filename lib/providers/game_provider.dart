@@ -120,6 +120,12 @@ class GameNotifier extends StateNotifier<GameState> {
     final stage = state.currentStage;
     if (stage == null) return;
 
+    // Sync coins to stageProgress so VictoryScreen/DefeatScreen can display them
+    final progress = state.stageProgress;
+    if (progress != null) {
+      progress.coinsEarned = coinsEarned;
+    }
+
     if (victory) {
       final playerNotifier = _ref.read(playerProvider.notifier);
       playerNotifier.addCoins(coinsEarned);
