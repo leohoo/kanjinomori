@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'games/coordinator/stage_coordinator_screen.dart';
 import 'models/kanji.dart';
 import 'models/player.dart';
 import 'providers/providers.dart';
@@ -50,7 +51,8 @@ class KanjiGameApp extends StatelessWidget {
           seedColor: AppColors.primary,
           brightness: Brightness.light,
         ),
-        fontFamily: 'NotoSansJP',
+        // Use system default fonts for proper kanji support
+        // fontFamily: 'NotoSansJP',
       ),
       home: const GameNavigator(),
     );
@@ -83,22 +85,18 @@ class GameNavigator extends ConsumerWidget {
     // Route to appropriate screen
     return AnimatedSwitcher(
       duration: AppDurations.transitionDuration,
-      child: _getScreen(gameState.currentScreen),
+      child: _getScreen(context, ref, gameState),
     );
   }
 
-  Widget _getScreen(GameScreen screen) {
-    switch (screen) {
+  Widget _getScreen(BuildContext context, WidgetRef ref, GameState gameState) {
+    switch (gameState.currentScreen) {
       case GameScreen.home:
         return const HomeScreen();
       case GameScreen.stageSelect:
         return const StageSelectScreen();
-      case GameScreen.stage:
-        return const StageScreen();
-      case GameScreen.question:
-        return const QuestionScreen();
-      case GameScreen.battle:
-        return const BattleScreen();
+      case GameScreen.field:
+        return _buildFieldScreen(ref, gameState);
       case GameScreen.victory:
         return const VictoryScreen();
       case GameScreen.defeat:
@@ -106,5 +104,26 @@ class GameNavigator extends ConsumerWidget {
       case GameScreen.shop:
         return const ShopScreen();
     }
+  }
+
+  Widget _buildFieldScreen(WidgetRef ref, GameState gameState) {
+    final stage = gameState.currentStage;
+    final progress = gameState.stageProgress;
+
+    if (stage == null || progress == null) {
+      // Fallback to home if state is invalid
+      return const HomeScreen();
+    }
+
+    return StageCoordinatorScreen(
+      stage: stage,
+      questions: progress.questions,
+      onStageComplete: (victory, questionCoins, battleCoins) {
+        ref.read(gameProvider.notifier).completeFieldStage(victory, questionCoins, battleCoins);
+      },
+      onBack: () {
+        ref.read(gameProvider.notifier).goToStageSelect();
+      },
+    );
   }
 }

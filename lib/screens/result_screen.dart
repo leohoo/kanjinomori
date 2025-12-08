@@ -33,12 +33,14 @@ class VictoryScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Victory icon
-                Container(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Victory icon
+                  Container(
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
@@ -244,6 +246,7 @@ class VictoryScreen extends ConsumerWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -274,10 +277,12 @@ class DefeatScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                 // Defeat icon
                 Container(
                   width: 120,
@@ -369,7 +374,7 @@ class DefeatScreen extends ConsumerWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            gameNotifier.startStage(stage?.id ?? 1);
+                            gameNotifier.startFieldStage(stage?.id ?? 1);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.accent,
@@ -403,6 +408,7 @@ class DefeatScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

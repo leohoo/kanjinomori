@@ -216,9 +216,14 @@ class Battle {
   }
 
   BattleResult getResult() {
+    // Check if this is a "fake" battle from 2.5D mode (turnCount stores coins directly)
+    final isFakeBattle = turnCount >= 20; // Real turn counts are usually < 20
+
     return BattleResult(
       playerWon: state == BattleState.victory,
-      coinsEarned: state == BattleState.victory ? 20 + (turnCount < 5 ? 10 : 0) : 0,
+      coinsEarned: isFakeBattle
+          ? turnCount // Use turnCount directly as coins (hack for 2.5D mode)
+          : (state == BattleState.victory ? 20 + (turnCount < 5 ? 10 : 0) : 0),
       damageDealt: playerDamageDealt,
       damageTaken: playerDamageTaken,
     );

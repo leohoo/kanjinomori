@@ -1,0 +1,13 @@
+Portal Sprites
+--------------
+Author: Cethiel
+Source: https://opengameart.org/content/portals
+License: CC0 (Public Domain)
+
+No attribution required.
+
+Files:
+- portal1.png - Portal with arch frame (animated)
+  Spritesheet: 128 x 160 pixels
+  Frame size: 32 x 32 pixels (4 columns x 5 rows, 16 frames)
+- portal2.png - Portal rings only (animated)

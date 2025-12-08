@@ -3,7 +3,14 @@ import '../models/models.dart';
 import 'kanji_provider.dart';
 import 'player_provider.dart';
 
-enum GameScreen { home, stageSelect, stage, question, battle, victory, defeat, shop }
+enum GameScreen {
+  home,
+  stageSelect,
+  field,      // New 2.5D field exploration
+  victory,
+  defeat,
+  shop,
+}
 
 class GameState {
   final GameScreen currentScreen;
@@ -54,7 +61,8 @@ class GameNotifier extends StateNotifier<GameState> {
     state = state.copyWith(currentScreen: GameScreen.shop);
   }
 
-  Future<void> startStage(int stageId) async {
+  /// Start a stage with the new 2.5D field exploration mode.
+  Future<void> startFieldStage(int stageId) async {
     final stage = Stage.getStage(stageId);
     if (stage == null) return;
 
@@ -72,149 +80,63 @@ class GameNotifier extends StateNotifier<GameState> {
     );
 
     state = GameState(
-      currentScreen: GameScreen.stage,
+      currentScreen: GameScreen.field,
       currentStage: stage,
       stageProgress: progress,
       isLoading: false,
     );
   }
 
-  void startQuestion() {
-    state = state.copyWith(currentScreen: GameScreen.question);
-  }
-
-  void answerQuestion(bool correct) {
-    final progress = state.stageProgress;
-    if (progress == null) return;
-
-    progress.answerQuestion(correct);
-
-    if (progress.isComplete) {
-      // All questions done, start boss battle
-      _startBattle();
-    } else {
-      // Continue to next question or show stage screen for path choice
-      state = state.copyWith(
-        stageProgress: progress,
-        currentScreen: GameScreen.stage,
-      );
-    }
-  }
-
-  void _startBattle() {
+  /// Handle field stage completion
+  void completeFieldStage(bool victory, int questionCoins, int battleCoins) {
     final stage = state.currentStage;
+    if (stage == null) return;
+
+    final totalCoins = questionCoins + battleCoins;
+
+    // Sync coins to stageProgress so VictoryScreen/DefeatScreen can display them
     final progress = state.stageProgress;
-    if (stage == null || progress == null) return;
-
-    final playerNotifier = _ref.read(playerProvider.notifier);
-    final weaponDamage = playerNotifier.getWeaponDamage();
-
-    final battle = Battle(
-      playerName: 'プレイヤー',
-      playerHp: 100,
-      playerDamage: 10 + weaponDamage,
-      enemyName: stage.bossName,
-      enemyHp: stage.bossHp,
-      enemyDamage: stage.bossDamage,
-      hasKanjiBonus: progress.correctAnswers > 5, // Bonus if >50% correct
-    );
-
-    battle.startBattle();
-
-    state = state.copyWith(
-      currentBattle: battle,
-      currentScreen: GameScreen.battle,
-    );
-  }
-
-  ActionResult playerBattleAction(BattleAction action) {
-    final battle = state.currentBattle;
-    if (battle == null) {
-      return ActionResult(success: false, message: 'バトルがありません', damage: 0);
-    }
-
-    final result = battle.playerAction(action);
-
-    if (battle.state == BattleState.victory) {
-      _onBattleVictory();
-    } else if (battle.state == BattleState.defeat) {
-      _onBattleDefeat();
-    } else {
-      // Prepare enemy action
-      battle.prepareEnemyAction();
-    }
-
-    state = state.copyWith(currentBattle: battle);
-    return result;
-  }
-
-  ActionResult executeEnemyAction() {
-    final battle = state.currentBattle;
-    if (battle == null) {
-      return ActionResult(success: false, message: 'バトルがありません', damage: 0);
-    }
-
-    final result = battle.enemyAction();
-
-    if (battle.state == BattleState.victory) {
-      _onBattleVictory();
-    } else if (battle.state == BattleState.defeat) {
-      _onBattleDefeat();
-    } else {
-      battle.nextTurn();
-    }
-
-    state = state.copyWith(currentBattle: battle);
-    return result;
-  }
-
-  void _onBattleVictory() {
-    final battle = state.currentBattle;
-    final progress = state.stageProgress;
-    final stage = state.currentStage;
-
-    if (battle == null || progress == null || stage == null) return;
-
-    final battleResult = battle.getResult();
-    final totalCoins = progress.coinsEarned + battleResult.coinsEarned;
-
-    // Award coins and unlock next stage
-    final playerNotifier = _ref.read(playerProvider.notifier);
-    playerNotifier.addCoins(totalCoins);
-    playerNotifier.updateHighScore(stage.id, totalCoins);
-
-    // Unlock next stage
-    if (stage.id < Stage.allStages.length) {
-      playerNotifier.unlockStage(stage.id + 1);
-    }
-
-    state = state.copyWith(currentScreen: GameScreen.victory);
-  }
-
-  void _onBattleDefeat() {
-    // Give partial coins from questions
-    final progress = state.stageProgress;
-    if (progress != null && progress.coinsEarned > 0) {
-      final playerNotifier = _ref.read(playerProvider.notifier);
-      playerNotifier.addCoins(progress.coinsEarned ~/ 2); // Half coins on defeat
-    }
-
-    state = state.copyWith(currentScreen: GameScreen.defeat);
-  }
-
-  int getTotalCoinsEarned() {
-    final progress = state.stageProgress;
-    final battle = state.currentBattle;
-    int total = 0;
-
     if (progress != null) {
-      total += progress.coinsEarned;
-    }
-    if (battle != null && battle.state == BattleState.victory) {
-      total += battle.getResult().coinsEarned;
+      progress.coinsEarned = questionCoins; // Store question coins here
     }
 
-    return total;
+    // Create a fake battle result to store battle coins for display
+    final fakeBattle = Battle(
+      playerName: 'Player',
+      playerHp: 100,
+      playerDamage: 10,
+      enemyName: stage.bossName,
+      enemyHp: 100,
+      enemyDamage: 15,
+    );
+    // Hack: Store battle coins in the battle's turn count for display
+    fakeBattle.turnCount = battleCoins;
+    if (victory) {
+      fakeBattle.state = BattleState.victory;
+    }
+
+    if (victory) {
+      final playerNotifier = _ref.read(playerProvider.notifier);
+      playerNotifier.addCoins(totalCoins);
+      playerNotifier.updateHighScore(stage.id, totalCoins);
+
+      // Unlock next stage
+      if (stage.id < Stage.allStages.length) {
+        playerNotifier.unlockStage(stage.id + 1);
+      }
+
+      state = state.copyWith(
+        currentScreen: GameScreen.victory,
+        currentBattle: fakeBattle,
+      );
+    } else {
+      // Give partial coins on defeat
+      if (totalCoins > 0) {
+        final playerNotifier = _ref.read(playerProvider.notifier);
+        playerNotifier.addCoins(totalCoins ~/ 2);
+      }
+      state = state.copyWith(currentScreen: GameScreen.defeat);
+    }
   }
 }
 

@@ -63,3 +63,87 @@ class GameConfig {
   static const int playerBaseHp = 100;
   static const int playerBaseDamage = 10;
 }
+
+/// Physics constants for 2.5D game mechanics
+class GamePhysics {
+  // Player movement (pixels/sec)
+  static const double playerSpeed = 200.0;
+  static const double playerAcceleration = 800.0;
+  static const double playerFriction = 600.0;
+
+  // Jump physics (pixels/sec)
+  static const double jumpForce = 400.0;
+  static const double maxJumpForce = 600.0; // held jump
+  static const double gravity = 980.0;
+  static const double maxFallSpeed = 800.0;
+
+  // Joystick
+  static const double joystickDeadZone = 0.2; // 20%
+
+  // Combat timing (seconds)
+  static const double attackDuration = 0.3;
+  static const double aerialAttackDuration = 0.25;
+  static const double shieldDuration = 1.0;
+  static const double shieldCooldown = 0.5;
+  static const double invincibilityDuration = 0.5;
+  static const double knockbackDuration = 0.2;
+
+  // Combat multipliers
+  static const double aerialDamageMultiplier = 0.8; // 80% damage
+  static const double aerialCritBonusPercent = 0.05; // +5% crit chance
+  static const double critDamageMultiplier = 1.5;
+  static const double kanjiBonusMultiplier = 1.5; // >50% correct answers
+
+  // Effects (seconds)
+  static const double jumpWindEffectDuration = 0.35;
+  static const double landingDustDuration = 0.2;
+
+  // Enemy AI distances (pixels)
+  static const double enemyApproachDistance = 200.0;
+  static const double enemyRetreatDistance = 80.0;
+  static const double enemyAttackRange = 100.0;
+  static const double enemySafeDistance = 150.0;
+
+  // Knockback velocities (pixels/sec)
+  static const double knockbackHorizontal = 80.0;
+  static const double knockbackVertical = 100.0;
+  static const double playerKnockbackHorizontal = 100.0;
+  static const double playerKnockbackVertical = 150.0;
+}
+
+/// Tile and sprite sizes for isometric rendering
+class GameSizes {
+  // Isometric tile dimensions
+  static const double tileWidth = 64.0;
+  static const double tileHeight = 32.0;
+
+  // Player sprite
+  static const double playerWidth = 48.0;
+  static const double playerHeight = 64.0;
+
+  // Door sprite
+  static const double doorWidth = 64.0;
+  static const double doorHeight = 96.0;
+
+  // UI elements
+  static const double joystickSize = 120.0;
+  static const double joystickKnobSize = 50.0;
+  static const double actionButtonLarge = 80.0;
+  static const double actionButtonMedium = 60.0;
+
+  // Hitboxes
+  static const double playerHitboxWidth = 32.0;
+  static const double playerHitboxHeight = 48.0;
+  static const double attackHitboxWidth = 40.0;
+  static const double attackHitboxHeight = 32.0;
+
+  // Battle arena layout (as ratio of screen size)
+  static const double battleGroundRatio = 0.75;
+  static const double battleArenaPadding = 50.0;
+  static const double battlePlayerSpawnRatio = 0.25;
+  static const double battleEnemySpawnRatio = 0.75;
+
+  // Hitbox size multipliers for collision detection
+  static const double hitboxWidthRatio = 0.8;
+  static const double hitboxHeightRatio = 0.9;
+}

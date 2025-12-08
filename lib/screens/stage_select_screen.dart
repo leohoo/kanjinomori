@@ -76,7 +76,7 @@ class StageSelectScreen extends ConsumerWidget {
                       isUnlocked: isUnlocked,
                       highScore: highScore,
                       onTap: isUnlocked
-                          ? () => gameNotifier.startStage(stage.id)
+                          ? () => gameNotifier.startFieldStage(stage.id)
                           : null,
                     );
                   },
