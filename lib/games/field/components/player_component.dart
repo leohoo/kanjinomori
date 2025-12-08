@@ -138,8 +138,18 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   void _updateVelocity(double dt) {
     if (movementInput.length > 0) {
-      // Accelerate towards input direction
-      final targetVelocity = movementInput.normalized() * GamePhysics.playerSpeed;
+      // Transform joystick input to isometric screen movement
+      // This makes movement follow the diamond tile grid:
+      // - Joystick RIGHT → move down-right (along iso X axis)
+      // - Joystick DOWN → move down-left (along iso Y axis)
+      // - Joystick UP → move up-right (iso north)
+      // - Joystick LEFT → move up-left (iso west)
+      final normalized = movementInput.normalized();
+      final isoX = normalized.x - normalized.y;
+      final isoY = (normalized.x + normalized.y) * 0.5;
+      final isoDirection = Vector2(isoX, isoY).normalized();
+
+      final targetVelocity = isoDirection * GamePhysics.playerSpeed;
       final acceleration = GamePhysics.playerAcceleration * dt;
 
       velocity.x = _moveTowards(velocity.x, targetVelocity.x, acceleration);
@@ -220,9 +230,10 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
   void _updateDirection() {
     if (movementInput.length < 0.1) return;
 
-    // Update facing direction based on horizontal input
-    if (movementInput.x.abs() > 0.1) {
-      final shouldFaceRight = movementInput.x > 0;
+    // Update facing direction based on screen velocity (isometric movement)
+    // Sprite should face the direction it's actually moving on screen
+    if (velocity.x.abs() > 1) {
+      final shouldFaceRight = velocity.x > 0;
       if (_facingRight != shouldFaceRight) {
         _facingRight = shouldFaceRight;
         _updateSpriteFlip();
