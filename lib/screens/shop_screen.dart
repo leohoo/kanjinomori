@@ -87,6 +87,9 @@ class _ShopScreenState extends ConsumerState<ShopScreen>
                     color: AppColors.accent,
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                   ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  dividerHeight: 0,
                   labelColor: AppColors.accentDark,
                   unselectedLabelColor: Colors.white70,
                   labelStyle: const TextStyle(
