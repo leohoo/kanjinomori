@@ -95,35 +95,6 @@ class FieldGame extends FlameGame with HasCollisionDetection {
       ),
     );
     cameraComponent.viewport.add(joystick);
-
-    // Add minimap indicator
-    _addMinimap();
-  }
-
-  void _addMinimap() {
-    // Simple minimap in top-right corner
-    final minimapSize = Vector2(100, 100);
-    final minimapPos = Vector2(size.x - minimapSize.x - 10, 10);
-
-    final minimap = RectangleComponent(
-      position: minimapPos,
-      size: minimapSize,
-      paint: Paint()
-        ..color = Colors.black.withValues(alpha: 0.5)
-        ..style = PaintingStyle.fill,
-    );
-    cameraComponent.viewport.add(minimap);
-
-    // Minimap border
-    final border = RectangleComponent(
-      position: minimapPos,
-      size: minimapSize,
-      paint: Paint()
-        ..color = Colors.white.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    cameraComponent.viewport.add(border);
   }
 
   @override
