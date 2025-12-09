@@ -9,14 +9,34 @@ import 'package:xml/xml.dart';
 
 /// Converts KanjiVG SVG stroke data into a JSON file with normalized polylines.
 ///
-/// Usage:
-///   dart run tool/kanjivg_to_json.dart --input <kanjivg-root> --output <out.json>
+/// ## Downloading KanjiVG
+///
+/// 1. Find the latest release tag via GitHub API:
+///    ```
+///    curl -s "https://api.github.com/repos/KanjiVG/kanjivg/releases?per_page=1" | grep tag_name
+///    ```
+///
+/// 2. Download the main zip (replace TAG with actual tag, e.g., r20250816):
+///    ```
+///    curl -L "https://github.com/KanjiVG/kanjivg/releases/download/TAG/kanjivg-YYYYMMDD-main.zip" -o kanjivg.zip
+///    unzip kanjivg.zip -d /tmp/kanjivg
+///    ```
+///
+///    Note: The filename uses the date format YYYYMMDD (e.g., kanjivg-20250816-main.zip).
+///    Do NOT use "kanjivg-YYYYMMDD.zip" - that file doesn't exist.
+///
+/// ## Usage
+///
+///   dart run tool/kanjivg_to_json.dart --input /tmp/kanjivg --output assets/data/kyouiku_strokes.json
+///   python3 tool/filter_strokes.py  # Filter to kyouiku kanji only
+///
 /// The input directory should contain the `kanji` folder from KanjiVG.
 ///
-/// Output JSON shape:
+/// ## Output JSON shape
+///
 /// {
 ///   "一": [
-///     [ [0.1, 0.2], [0.9, 0.2] ], // stroke 1 (normalized to 0..1)
+///     [ [0.1, 0.5], [0.9, 0.5] ], // stroke 1 (normalized to 0..1, aspect ratio preserved)
 ///     ...
 ///   ],
 ///   ...
@@ -116,9 +136,18 @@ List<List<List<double>>> _normalizeStrokes(
   final width = (maxX - minX).abs().clamp(1e-6, double.infinity);
   final height = (maxY - minY).abs().clamp(1e-6, double.infinity);
 
+  // Use uniform scale to preserve aspect ratio
+  final scale = max(width, height);
+  // Center the smaller dimension within 0-1 range
+  final offsetX = (scale - width) / 2;
+  final offsetY = (scale - height) / 2;
+
   return strokes
       .map((stroke) => stroke
-          .map((p) => [(p[0] - minX) / width, (p[1] - minY) / height])
+          .map((p) => [
+                (p[0] - minX + offsetX) / scale,
+                (p[1] - minY + offsetY) / scale
+              ])
           .toList())
       .toList();
 }
