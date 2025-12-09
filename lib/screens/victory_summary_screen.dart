@@ -449,7 +449,7 @@ class _VictorySummaryGame extends FlameGame {
 
     // Update background particles
     for (final particle in _bgParticles) {
-      particle.update(dt, size);
+      particle.update(dt, size, _random);
     }
   }
 
@@ -498,14 +498,14 @@ class _BackgroundParticle {
   double size;
   Color color;
 
-  void update(double dt, Vector2 screenSize) {
+  void update(double dt, Vector2 screenSize, Random random) {
     x += vx * dt;
     y += vy * dt;
 
     // Wrap around screen
     if (y < -size) {
       y = screenSize.y + size;
-      x = Random().nextDouble() * screenSize.x;
+      x = random.nextDouble() * screenSize.x;
     }
     if (x < -size) x = screenSize.x + size;
     if (x > screenSize.x + size) x = -size;
