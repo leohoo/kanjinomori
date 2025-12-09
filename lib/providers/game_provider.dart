@@ -6,7 +6,8 @@ import 'player_provider.dart';
 enum GameScreen {
   home,
   stageSelect,
-  field,      // New 2.5D field exploration
+  field,           // New 2.5D field exploration
+  victorySummary,  // Animated kanji summary after battle victory
   victory,
   defeat,
   shop,
@@ -61,6 +62,11 @@ class GameNotifier extends StateNotifier<GameState> {
     state = state.copyWith(currentScreen: GameScreen.shop);
   }
 
+  /// Transition from victory summary to victory results screen
+  void showVictoryResults() {
+    state = state.copyWith(currentScreen: GameScreen.victory);
+  }
+
   /// Start a stage with the new 2.5D field exploration mode.
   Future<void> startFieldStage(int stageId) async {
     final stage = Stage.getStage(stageId);
@@ -88,16 +94,32 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   /// Handle field stage completion
-  void completeFieldStage(bool victory, int questionCoins, int battleCoins) {
+  void completeFieldStage(
+    bool victory,
+    int questionCoins,
+    int battleCoins, {
+    List<String>? answeredKanjis,
+    List<bool>? answersCorrect,
+  }) {
     final stage = state.currentStage;
     if (stage == null) return;
 
     final totalCoins = questionCoins + battleCoins;
 
-    // Sync coins to stageProgress so VictoryScreen/DefeatScreen can display them
+    // Sync data to stageProgress for VictoryScreen/DefeatScreen
     final progress = state.stageProgress;
     if (progress != null) {
-      progress.coinsEarned = questionCoins; // Store question coins here
+      progress.coinsEarned = questionCoins;
+
+      // Copy answered kanji data for victory summary
+      if (answeredKanjis != null) {
+        progress.answeredKanjis.clear();
+        progress.answeredKanjis.addAll(answeredKanjis);
+      }
+      if (answersCorrect != null) {
+        progress.answersCorrect.clear();
+        progress.answersCorrect.addAll(answersCorrect);
+      }
     }
 
     // Create a fake battle result to store battle coins for display
@@ -125,8 +147,9 @@ class GameNotifier extends StateNotifier<GameState> {
         playerNotifier.unlockStage(stage.id + 1);
       }
 
+      // Go to victory summary screen first (animated kanji review)
       state = state.copyWith(
-        currentScreen: GameScreen.victory,
+        currentScreen: GameScreen.victorySummary,
         currentBattle: fakeBattle,
       );
     } else {

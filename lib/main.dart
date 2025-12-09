@@ -97,6 +97,8 @@ class GameNavigator extends ConsumerWidget {
         return const StageSelectScreen();
       case GameScreen.field:
         return _buildFieldScreen(ref, gameState);
+      case GameScreen.victorySummary:
+        return const VictorySummaryScreen();
       case GameScreen.victory:
         return const VictoryScreen();
       case GameScreen.defeat:
@@ -118,8 +120,20 @@ class GameNavigator extends ConsumerWidget {
     return StageCoordinatorScreen(
       stage: stage,
       questions: progress.questions,
-      onStageComplete: (victory, questionCoins, battleCoins) {
-        ref.read(gameProvider.notifier).completeFieldStage(victory, questionCoins, battleCoins);
+      onStageComplete: (
+        victory,
+        questionCoins,
+        battleCoins, {
+        List<String>? answeredKanjis,
+        List<bool>? answersCorrect,
+      }) {
+        ref.read(gameProvider.notifier).completeFieldStage(
+          victory,
+          questionCoins,
+          battleCoins,
+          answeredKanjis: answeredKanjis,
+          answersCorrect: answersCorrect,
+        );
       },
       onBack: () {
         ref.read(gameProvider.notifier).goToStageSelect();

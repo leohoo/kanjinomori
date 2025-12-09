@@ -132,6 +132,9 @@ class StageProgress {
   List<bool> answersCorrect;
   int currentAttempt; // 1, 2, or 3
 
+  /// Track kanji characters answered at each door (for victory summary)
+  final List<String> answeredKanjis;
+
   StageProgress({
     required this.stageId,
     required this.questions,
@@ -139,8 +142,10 @@ class StageProgress {
     this.correctAnswers = 0,
     this.coinsEarned = 0,
     List<bool>? answersCorrect,
+    List<String>? answeredKanjis,
     this.currentAttempt = 1,
-  }) : answersCorrect = answersCorrect ?? [];
+  })  : answersCorrect = answersCorrect ?? [],
+        answeredKanjis = answeredKanjis ?? [];
 
   KanjiQuestion get currentQuestion => questions[currentQuestionIndex];
 
@@ -178,6 +183,11 @@ class StageProgress {
   }
 
   void answerQuestion(bool correct) {
+    // Track the kanji character being answered
+    if (currentQuestionIndex < questions.length) {
+      answeredKanjis.add(questions[currentQuestionIndex].kanji.kanji);
+    }
+
     answersCorrect.add(correct);
     if (correct) {
       correctAnswers++;
@@ -197,6 +207,7 @@ class StageProgress {
     correctAnswers = 0;
     coinsEarned = 0;
     answersCorrect.clear();
+    answeredKanjis.clear();
     currentAttempt = 1;
   }
 }

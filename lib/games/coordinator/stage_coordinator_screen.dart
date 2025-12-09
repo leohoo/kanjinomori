@@ -30,7 +30,13 @@ class StageCoordinatorScreen extends ConsumerStatefulWidget {
   final List<KanjiQuestion> questions;
 
   /// Callback when stage is complete
-  final void Function(bool victory, int questionCoins, int battleCoins) onStageComplete;
+  final void Function(
+    bool victory,
+    int questionCoins,
+    int battleCoins, {
+    List<String> answeredKanjis,
+    List<bool> answersCorrect,
+  }) onStageComplete;
 
   /// Callback when back button is pressed
   final VoidCallback? onBack;
@@ -102,10 +108,19 @@ class _StageCoordinatorScreenState
   void _handleBattleEnd(battle.BattleResult result) {
     final victory = result == battle.BattleResult.victory;
     _coordinator.completeBattle(victory);
+
+    // Build list of answered kanjis in order they were answered
+    final answeredKanjis = <String>[];
+    for (int i = 0; i < widget.questions.length; i++) {
+      answeredKanjis.add(widget.questions[i].kanji.kanji);
+    }
+
     widget.onStageComplete(
       victory,
       _coordinator.questionCoins,
       _coordinator.battleCoins,
+      answeredKanjis: answeredKanjis,
+      answersCorrect: _coordinator.doorCorrect,
     );
   }
 
