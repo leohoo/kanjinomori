@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -292,12 +293,25 @@ class _VictorySummaryGame extends FlameGame {
   bool _allComplete = false;
   double _staggerDelay = 0;
   bool _initialized = false;
+  bool _layoutComplete = false;
+
+  // Pending data for deferred initialization
+  List<String>? _pendingKanjis;
+  List<bool>? _pendingCorrect;
+  List<List<Offset>>? Function(String)? _pendingGetStrokes;
 
   // Layout
-  static const int columns = 4;
-  static const double kanjiSize = 70.0;
+  static const int columns = 5;
+  static const double kanjiSize = 64.0;
   static const double spacing = 12.0;
-  static const double topPadding = 120.0;
+  static const double topPadding = 160.0;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    // Set camera to top-left anchor so positions work as expected
+    camera.viewfinder.anchor = Anchor.topLeft;
+  }
 
   void initializeKanjis({
     required List<String> answeredKanjis,
@@ -307,14 +321,31 @@ class _VictorySummaryGame extends FlameGame {
     if (_initialized) return;
     _initialized = true;
 
+    // Store data for deferred layout
+    _pendingKanjis = answeredKanjis;
+    _pendingCorrect = answersCorrect;
+    _pendingGetStrokes = getStrokes;
+
+    // Try to layout now if size is available
+    _tryLayout();
+  }
+
+  void _tryLayout() {
+    if (_layoutComplete) return;
+    if (_pendingKanjis == null) return;
+    if (size.x == 0 || size.y == 0) return;
+
+    _layoutComplete = true;
+
     final screenWidth = size.x;
     final gridWidth = columns * kanjiSize + (columns - 1) * spacing;
     final startX = (screenWidth - gridWidth) / 2;
 
-    for (int i = 0; i < answeredKanjis.length && i < 10; i++) {
-      final kanji = answeredKanjis[i];
-      final wasCorrect = i < answersCorrect.length ? answersCorrect[i] : true;
-      final strokes = getStrokes(kanji);
+    for (int i = 0; i < _pendingKanjis!.length && i < 10; i++) {
+      final kanji = _pendingKanjis![i];
+      final wasCorrect =
+          i < _pendingCorrect!.length ? _pendingCorrect![i] : true;
+      final strokes = _pendingGetStrokes!(kanji);
 
       if (strokes == null || strokes.isEmpty) continue;
 
@@ -338,6 +369,18 @@ class _VictorySummaryGame extends FlameGame {
 
     // Spawn background particles
     _spawnBackgroundParticles();
+
+    // Clear pending data
+    _pendingKanjis = null;
+    _pendingCorrect = null;
+    _pendingGetStrokes = null;
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    // Try layout when we get a valid size
+    _tryLayout();
   }
 
   void _spawnBackgroundParticles() {
@@ -397,7 +440,7 @@ class _VictorySummaryGame extends FlameGame {
     }
 
     // Start first kanji if not started
-    if (_initialized &&
+    if (_layoutComplete &&
         _kanjiAnimations.isNotEmpty &&
         !_kanjiAnimations[0].isMounted &&
         _staggerDelay <= 0) {

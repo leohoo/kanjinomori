@@ -357,12 +357,15 @@ class KanjiStrokeAnimation extends PositionComponent {
   }
 
   void _drawBadge(Canvas canvas) {
-    final badgeSize = kanjiSize * 0.25;
-    final badgeX = kanjiSize - badgeSize * 0.6;
-    final badgeY = kanjiSize - badgeSize * 0.6;
+    final badgeSize = kanjiSize * 0.28;
+    // Position badge outside the box (bottom-right corner)
+    final badgeX = kanjiSize + badgeSize * 0.1;
+    final badgeY = kanjiSize + badgeSize * 0.1;
 
-    // Badge background
+    // Badge background with white border for visibility
     final badgeColor = wasCorrect ? const Color(0xFF27AE60) : const Color(0xFFE74C3C);
+    final borderPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(badgeX, badgeY), badgeSize / 2 + 2, borderPaint);
     final badgePaint = Paint()..color = badgeColor;
     canvas.drawCircle(Offset(badgeX, badgeY), badgeSize / 2, badgePaint);
 
