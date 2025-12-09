@@ -20,6 +20,7 @@ class VictoryScreen extends ConsumerWidget {
     final isPerfect = progress?.isPerfect ?? false;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFF8F00),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
