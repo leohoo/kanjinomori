@@ -138,13 +138,13 @@ class _StageCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isUnlocked
-              ? Colors.white.withOpacity(0.15)
-              : Colors.black.withOpacity(0.3),
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.black.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(AppSizes.borderRadiusLarge),
           border: Border.all(
             color: isUnlocked
-                ? AppColors.accent.withOpacity(0.5)
-                : Colors.grey.withOpacity(0.3),
+                ? AppColors.accent.withValues(alpha: 0.5)
+                : Colors.grey.withValues(alpha: 0.3),
             width: 2,
           ),
         ),

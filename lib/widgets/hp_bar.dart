@@ -26,10 +26,10 @@ class HpBar extends StatelessWidget {
         Container(
           height: height,
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(height / 2),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -39,7 +39,7 @@ class HpBar extends StatelessWidget {
               children: [
                 // Background
                 Container(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                 ),
                 // Fill
                 FractionallySizedBox(
@@ -49,7 +49,7 @@ class HpBar extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           color,
-                          color.withOpacity(0.7),
+                          color.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -67,7 +67,7 @@ class HpBar extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withOpacity(0.3),
+                          Colors.white.withValues(alpha: 0.3),
                           Colors.transparent,
                         ],
                       ),
@@ -165,10 +165,10 @@ class _AnimatedHpBarState extends State<AnimatedHpBar>
             Container(
               height: widget.height,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(widget.height / 2),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -176,7 +176,7 @@ class _AnimatedHpBarState extends State<AnimatedHpBar>
                 borderRadius: BorderRadius.circular(widget.height / 2),
                 child: Stack(
                   children: [
-                    Container(color: widget.color.withOpacity(0.2)),
+                    Container(color: widget.color.withValues(alpha: 0.2)),
                     FractionallySizedBox(
                       widthFactor: _animation.value,
                       child: Container(
@@ -184,7 +184,7 @@ class _AnimatedHpBarState extends State<AnimatedHpBar>
                           gradient: LinearGradient(
                             colors: [
                               widget.color,
-                              widget.color.withOpacity(0.7),
+                              widget.color.withValues(alpha: 0.7),
                             ],
                           ),
                         ),

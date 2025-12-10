@@ -78,7 +78,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen>
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                 ),
                 child: TabBar(
@@ -188,12 +188,12 @@ class _ShopCategory extends ConsumerWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppSizes.borderRadius),
             border: Border.all(
               color: isEquipped
                   ? AppColors.accent
-                  : Colors.white.withOpacity(0.1),
+                  : Colors.white.withValues(alpha: 0.1),
               width: isEquipped ? 2 : 1,
             ),
           ),
@@ -203,7 +203,7 @@ class _ShopCategory extends ConsumerWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: _getCategoryColor().withOpacity(0.2),
+                color: _getCategoryColor().withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(

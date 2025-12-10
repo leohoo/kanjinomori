@@ -19,10 +19,10 @@ class CoinDisplay extends StatelessWidget {
         vertical: large ? 8 : 6,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.5),
+          color: AppColors.accent.withValues(alpha: 0.5),
           width: 2,
         ),
       ),
@@ -37,7 +37,7 @@ class CoinDisplay extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accentDark.withOpacity(0.5),
+                  color: AppColors.accentDark.withValues(alpha: 0.5),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -142,7 +142,7 @@ class _CoinEarnedAnimationState extends State<CoinEarnedAnimation>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accentDark.withOpacity(0.5),
+                    color: AppColors.accentDark.withValues(alpha: 0.5),
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),

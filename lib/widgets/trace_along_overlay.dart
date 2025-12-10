@@ -171,7 +171,7 @@ class _TraceAlongOverlayState extends State<TraceAlongOverlay>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -194,7 +194,7 @@ class _TraceAlongOverlayState extends State<TraceAlongOverlay>
             borderRadius: BorderRadius.circular(AppSizes.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -269,7 +269,7 @@ class _TraceAlongPainter extends CustomPainter {
 
     // Draw upcoming template strokes (very light)
     final upcomingPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.15)
+      ..color = Colors.grey.withValues(alpha: 0.15)
       ..strokeWidth = 10
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
@@ -282,7 +282,7 @@ class _TraceAlongPainter extends CustomPainter {
     // Draw current template stroke (light, but visible)
     if (currentStrokeIndex < templateStrokes.length) {
       final templatePaint = Paint()
-        ..color = Colors.blue.withOpacity(0.3)
+        ..color = Colors.blue.withValues(alpha: 0.3)
         ..strokeWidth = 12
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
@@ -307,7 +307,7 @@ class _TraceAlongPainter extends CustomPainter {
     if (startPoint != null && currentUserStroke.isEmpty) {
       // Outer glow
       final glowPaint = Paint()
-        ..color = Colors.amber.withOpacity(0.3)
+        ..color = Colors.amber.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(startPoint!, 20, glowPaint);
 
@@ -328,7 +328,7 @@ class _TraceAlongPainter extends CustomPainter {
     // Draw guide point (animated dot along the stroke)
     if (guidePoint != null && currentUserStroke.isEmpty) {
       final guidePaint = Paint()
-        ..color = Colors.blue.withOpacity(0.6)
+        ..color = Colors.blue.withValues(alpha: 0.6)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(guidePoint!, 8, guidePaint);
     }
@@ -366,7 +366,7 @@ class _TraceAlongPainter extends CustomPainter {
 
   void _drawGrid(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..strokeWidth = 1;
 
     canvas.drawLine(
@@ -381,7 +381,7 @@ class _TraceAlongPainter extends CustomPainter {
     );
 
     final diagonalPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.1)
+      ..color = Colors.grey.withValues(alpha: 0.1)
       ..strokeWidth = 1;
 
     canvas.drawLine(Offset.zero, Offset(size.width, size.height), diagonalPaint);
