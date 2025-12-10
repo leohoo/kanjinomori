@@ -74,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                 height: 150,
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusLarge),
                 ),
                 child: const Center(
@@ -117,7 +117,7 @@ class HomeScreen extends ConsumerWidget {
                     _MenuButton(
                       label: 'ショップ',
                       icon: Icons.storefront,
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       textColor: Colors.white,
                       onPressed: () => gameNotifier.goToShop(),
                     ),
@@ -132,7 +132,7 @@ class HomeScreen extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                 ),
                 child: Row(

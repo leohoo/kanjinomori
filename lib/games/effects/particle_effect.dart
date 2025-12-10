@@ -32,9 +32,8 @@ abstract class ParticleEffect extends PositionComponent {
 /// Wind lines effect for jumps (white diagonal lines)
 class JumpWindEffect extends ParticleEffect {
   JumpWindEffect({
-    required Vector2 position,
+    required super.position,
   }) : super(
-          position: position,
           duration: GamePhysics.jumpWindEffectDuration,
         );
 
@@ -105,9 +104,8 @@ class _WindLine {
 /// Dust cloud effect for landing
 class LandingDustEffect extends ParticleEffect {
   LandingDustEffect({
-    required Vector2 position,
+    required super.position,
   }) : super(
-          position: position,
           duration: GamePhysics.landingDustDuration,
         );
 
@@ -168,11 +166,10 @@ class _DustParticle {
 /// Slash effect for attacks
 class AttackSlashEffect extends ParticleEffect {
   AttackSlashEffect({
-    required Vector2 position,
+    required super.position,
     required this.facingRight,
     this.isAerial = false,
   }) : super(
-          position: position,
           duration: 0.3,
         );
 
@@ -219,10 +216,9 @@ class AttackSlashEffect extends ParticleEffect {
 /// Green glow effect for door completion
 class DoorCompletionEffect extends ParticleEffect {
   DoorCompletionEffect({
-    required Vector2 position,
+    required super.position,
     required this.doorSize,
   }) : super(
-          position: position,
           duration: 1.5,
         );
 
@@ -301,11 +297,10 @@ class _GlowParticle {
 /// Coin collection animation
 class CoinCollectEffect extends ParticleEffect {
   CoinCollectEffect({
-    required Vector2 position,
+    required super.position,
     required this.targetPosition,
     this.coinCount = 1,
   }) : super(
-          position: position,
           duration: 0.8,
         );
 
@@ -378,11 +373,10 @@ class _CoinParticle {
 /// Damage flash effect (red tint)
 class DamageFlashEffect extends ParticleEffect {
   DamageFlashEffect({
-    required Vector2 position,
+    required super.position,
     required Vector2 flashSize,
   }) : _flashSize = flashSize,
        super(
-          position: position,
           duration: 0.15,
         );
 
@@ -405,9 +399,8 @@ class DamageFlashEffect extends ParticleEffect {
 /// Critical hit effect (star burst)
 class CriticalHitEffect extends ParticleEffect {
   CriticalHitEffect({
-    required Vector2 position,
+    required super.position,
   }) : super(
-          position: position,
           duration: 0.4,
         );
 
