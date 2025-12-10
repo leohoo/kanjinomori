@@ -27,8 +27,8 @@ import 'package:xml/xml.dart';
 ///
 /// ## Usage
 ///
-///   dart run tool/kanjivg_to_json.dart --input /tmp/kanjivg --output assets/data/kyouiku_strokes.json
-///   python3 tool/filter_strokes.py  # Filter to kyouiku kanji only
+///   dart run tool/kanjivg_to_json.dart --input /tmp/kanjivg --output tmp/all_strokes.json
+///   python3 tool/filter_strokes.py --input tmp/all_strokes.json  # Filter to kyouiku kanji only
 ///
 /// The input directory should contain the `kanji` folder from KanjiVG.
 ///

@@ -46,3 +46,4 @@ app.*.map.json
 
 # Auto-generated Xcode workspace data
 **/Runner.xcworkspace/contents.xcworkspacedata
+tmp/
