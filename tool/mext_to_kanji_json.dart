@@ -85,11 +85,13 @@ Download data first:
   final result = _mergeData(mextData, kanjidicData);
   stderr.writeln('Generated ${result.length} kanji entries');
 
-  // Sort by grade, then by stroke count
+  // Sort by grade, then by stroke count, then by unicode codepoint
   result.sort((a, b) {
     final gradeCompare = (a['grade'] as int).compareTo(b['grade'] as int);
     if (gradeCompare != 0) return gradeCompare;
-    return (a['stroke_count'] as int).compareTo(b['stroke_count'] as int);
+    final strokeCompare = (a['stroke_count'] as int).compareTo(b['stroke_count'] as int);
+    if (strokeCompare != 0) return strokeCompare;
+    return (a['kanji'] as String).codeUnitAt(0).compareTo((b['kanji'] as String).codeUnitAt(0));
   });
 
   await outputFile
