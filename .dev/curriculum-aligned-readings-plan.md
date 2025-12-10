@@ -11,8 +11,9 @@ Current app issues:
 
 Use KANJIDIC2 (CC BY-SA 4.0) to provide accurate reading data. Keep scope minimal.
 
-## Scope (Narrowed)
+## Scope
 
+- **Automate kanji.json generation**: Create reproducible script (currently manually compiled)
 - **Writing questions**: Show ALL readings (音読み + 訓読み) as hint
 - **Reading questions**: Pick ONE correct answer randomly from all readings
 - **No model changes**: Keep existing `List<String> readings` field
@@ -22,7 +23,8 @@ Use KANJIDIC2 (CC BY-SA 4.0) to provide accurate reading data. Keep scope minima
 
 ### Step 1: Create Data Conversion Tool
 Create `tool/kanjidic2_to_json.dart`:
-- Download and parse KANJIDIC2 XML
+- Document how to download KANJIDIC2 XML (similar to kanjivg_to_json.dart)
+- Parse KANJIDIC2 XML
 - Filter to grade 1-6 (教育漢字) only
 - Extract:
   - `ja_on` readings → convert katakana to hiragana
@@ -31,6 +33,7 @@ Create `tool/kanjidic2_to_json.dart`:
   - English meanings
   - Grade, stroke count
 - Output as `kanji.json` (same format as current)
+- This replaces the current manual process documented in `.dev/data/kanji-data-sources.md`
 
 ### Step 2: Update Question Generation
 Modify `lib/providers/kanji_provider.dart`:
