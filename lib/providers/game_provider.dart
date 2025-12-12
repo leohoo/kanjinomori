@@ -12,6 +12,7 @@ enum GameScreen {
   victory,
   defeat,
   shop,
+  settings,
 }
 
 class GameState {
@@ -62,6 +63,10 @@ class GameNotifier extends StateNotifier<GameState> {
   void goToShop() {
     _ref.read(analyticsServiceProvider).logShopViewed();
     state = state.copyWith(currentScreen: GameScreen.shop);
+  }
+
+  void goToSettings() {
+    state = state.copyWith(currentScreen: GameScreen.settings);
   }
 
   /// Transition from victory summary to victory results screen
