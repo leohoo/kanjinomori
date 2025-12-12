@@ -28,12 +28,20 @@ class HomeScreen extends ConsumerWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Coin display
+              // Top bar with settings and coin display
               Padding(
                 padding: const EdgeInsets.all(AppSizes.paddingMedium),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    IconButton(
+                      onPressed: () => gameNotifier.goToSettings(),
+                      icon: const Icon(
+                        Icons.settings,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                    ),
                     CoinDisplay(coins: player.coins),
                   ],
                 ),

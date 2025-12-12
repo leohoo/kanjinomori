@@ -112,6 +112,8 @@ class GameNavigator extends ConsumerWidget {
         return const DefeatScreen();
       case GameScreen.shop:
         return const ShopScreen();
+      case GameScreen.settings:
+        return const SettingsScreen();
     }
   }
 
