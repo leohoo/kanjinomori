@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
+import 'analytics_provider.dart';
 import 'kanji_provider.dart';
 import 'player_provider.dart';
 
@@ -59,6 +60,7 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   void goToShop() {
+    _ref.read(analyticsServiceProvider).logShopViewed();
     state = state.copyWith(currentScreen: GameScreen.shop);
   }
 
@@ -73,6 +75,12 @@ class GameNotifier extends StateNotifier<GameState> {
     if (stage == null) return;
 
     state = state.copyWith(isLoading: true);
+
+    // Log stage start
+    _ref.read(analyticsServiceProvider).logStageStarted(
+      stageId: stageId,
+      grade: stage.grade,
+    );
 
     // Generate questions for this stage
     final kanjiRepo = _ref.read(kanjiRepositoryProvider);
@@ -137,6 +145,16 @@ class GameNotifier extends StateNotifier<GameState> {
       fakeBattle.state = BattleState.victory;
     }
 
+    // Log stage completion
+    final analytics = _ref.read(analyticsServiceProvider);
+    analytics.logStageCompleted(
+      stageId: stage.id,
+      victory: victory,
+      totalCoins: totalCoins,
+      questionCoins: questionCoins,
+      battleCoins: battleCoins,
+    );
+
     if (victory) {
       final playerNotifier = _ref.read(playerProvider.notifier);
       playerNotifier.addCoins(totalCoins);
@@ -145,6 +163,7 @@ class GameNotifier extends StateNotifier<GameState> {
       // Unlock next stage
       if (stage.id < Stage.allStages.length) {
         playerNotifier.unlockStage(stage.id + 1);
+        analytics.logStageUnlocked(stageId: stage.id + 1);
       }
 
       // Go to victory summary screen first (animated kanji review)
