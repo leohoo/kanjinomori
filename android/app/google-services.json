@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "478828138072",
+    "project_id": "kanjinomori",
+    "storage_bucket": "kanjinomori.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478828138072:android:12625ca8bbf9e5c668c42d",
+        "android_client_info": {
+          "package_name": "com.easyjp.kanjinomori"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3PJn_OL9vgzDAZdklNyezbev9z2tWOEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
