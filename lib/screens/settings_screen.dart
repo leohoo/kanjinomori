@@ -108,14 +108,16 @@ class SettingsScreen extends ConsumerWidget {
           color: Colors.white70,
         ),
         title: const Text(
-          '移動モード',
+          'アイソメトリック移動',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
         subtitle: Text(
-          player.useIsometricMovement ? 'アイソメトリック' : 'カーディナル',
+          player.useIsometricMovement
+              ? '斜め方向に移動します'
+              : '上下左右に移動します',
           style: const TextStyle(
             color: Colors.white70,
             fontSize: 12,
