@@ -32,6 +32,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: state.ownedCostumes,
       ownedDecorations: state.ownedDecorations,
       stageHighScores: state.stageHighScores,
+      useIsometricMovement: state.useIsometricMovement,
     );
     _saveState();
   }
@@ -68,6 +69,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: List.from(state.ownedCostumes),
       ownedDecorations: List.from(state.ownedDecorations),
       stageHighScores: state.stageHighScores,
+      useIsometricMovement: state.useIsometricMovement,
     );
     _saveState();
     return true;
@@ -85,6 +87,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: state.ownedCostumes,
       ownedDecorations: state.ownedDecorations,
       stageHighScores: state.stageHighScores,
+      useIsometricMovement: state.useIsometricMovement,
     );
     _saveState();
   }
@@ -101,6 +104,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: state.ownedCostumes,
       ownedDecorations: state.ownedDecorations,
       stageHighScores: state.stageHighScores,
+      useIsometricMovement: state.useIsometricMovement,
     );
     _saveState();
   }
@@ -118,6 +122,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: state.ownedCostumes,
       ownedDecorations: state.ownedDecorations,
       stageHighScores: state.stageHighScores,
+      useIsometricMovement: state.useIsometricMovement,
     );
     _saveState();
   }
@@ -139,6 +144,23 @@ class PlayerNotifier extends StateNotifier<Player> {
       ownedCostumes: state.ownedCostumes,
       ownedDecorations: state.ownedDecorations,
       stageHighScores: newScores,
+      useIsometricMovement: state.useIsometricMovement,
+    );
+    _saveState();
+  }
+
+  void setUseIsometricMovement(bool value) {
+    state = Player(
+      coins: state.coins,
+      currentStage: state.currentStage,
+      unlockedStages: state.unlockedStages,
+      equippedWeapon: state.equippedWeapon,
+      equippedCostume: state.equippedCostume,
+      ownedWeapons: state.ownedWeapons,
+      ownedCostumes: state.ownedCostumes,
+      ownedDecorations: state.ownedDecorations,
+      stageHighScores: state.stageHighScores,
+      useIsometricMovement: value,
     );
     _saveState();
   }

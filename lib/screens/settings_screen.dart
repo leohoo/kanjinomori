@@ -61,6 +61,10 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   children: [
                     const SizedBox(height: 16),
+                    // Control settings section
+                    _buildSectionHeader('操作設定'),
+                    _buildMovementModeTile(ref),
+                    const SizedBox(height: 8),
                     // App info section
                     _buildSectionHeader('アプリ情報'),
                     _buildVersionTile(),
@@ -85,6 +89,42 @@ class SettingsScreen extends ConsumerWidget {
           color: Colors.white70,
           letterSpacing: 1,
         ),
+      ),
+    );
+  }
+
+  Widget _buildMovementModeTile(WidgetRef ref) {
+    final player = ref.watch(playerProvider);
+    final playerNotifier = ref.read(playerProvider.notifier);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+      ),
+      child: SwitchListTile(
+        secondary: const Icon(
+          Icons.gamepad_outlined,
+          color: Colors.white70,
+        ),
+        title: const Text(
+          '移動モード',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          player.useIsometricMovement ? 'アイソメトリック' : 'カーディナル',
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+        value: player.useIsometricMovement,
+        onChanged: (value) => playerNotifier.setUseIsometricMovement(value),
+        activeTrackColor: AppColors.accent.withValues(alpha: 0.5),
+        thumbColor: WidgetStatePropertyAll(AppColors.accent),
       ),
     );
   }
