@@ -1,6 +1,8 @@
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../utils/constants.dart';
 import '../components/joystick_component.dart';
@@ -12,13 +14,14 @@ import 'components/tile_map_component.dart';
 ///
 /// Features:
 /// - Scrollable forest map with 10 doors
-/// - Player movement via joystick (8-directional)
+/// - Player movement via joystick or keyboard (8-directional)
 /// - Door collision triggers question screen
 /// - Camera follows player
-class FieldGame extends FlameGame with HasCollisionDetection {
+class FieldGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   FieldGame({
     this.onDoorEnter,
     this.completedDoors = const [],
+    this.useIsometricMovement = true,
   });
 
   /// Callback when player enters a door
@@ -26,6 +29,9 @@ class FieldGame extends FlameGame with HasCollisionDetection {
 
   /// List of already completed door indices
   final List<int> completedDoors;
+
+  /// Whether to use isometric movement transformation
+  final bool useIsometricMovement;
 
   /// Map dimensions in tiles
   static const int mapWidth = 30;
@@ -36,6 +42,9 @@ class FieldGame extends FlameGame with HasCollisionDetection {
   late PlayerComponent player;
   late SpriteJoystick joystick;
   late List<DoorComponent> doors;
+
+  // Keyboard state
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
 
   // Camera
   late CameraComponent cameraComponent;
@@ -61,6 +70,7 @@ class FieldGame extends FlameGame with HasCollisionDetection {
     // Create player at spawn position
     player = PlayerComponent(
       position: tileMap.getSpawnPosition(),
+      useIsometricMovement: useIsometricMovement,
     );
     player.onDoorCollision = _onPlayerDoorCollision;
     world.add(player);
@@ -98,11 +108,49 @@ class FieldGame extends FlameGame with HasCollisionDetection {
   }
 
   @override
+  KeyEventResult onKeyEvent(
+    KeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
+    _pressedKeys.clear();
+    _pressedKeys.addAll(keysPressed);
+    return KeyEventResult.handled;
+  }
+
+  Vector2 _getKeyboardInput() {
+    double x = 0, y = 0;
+
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyA) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowLeft)) {
+      x -= 1;
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyD) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowRight)) {
+      x += 1;
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyW) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowUp)) {
+      y -= 1;
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyS) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowDown)) {
+      y += 1;
+    }
+
+    return Vector2(x, y);
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
 
-    // Update player movement from joystick
-    player.setMovementInput(joystick.directionWithDeadZone);
+    // Combine joystick and keyboard input (keyboard takes priority when active)
+    final joystickInput = joystick.directionWithDeadZone;
+    final keyboardInput = _getKeyboardInput();
+    final movementInput =
+        keyboardInput.length > 0 ? keyboardInput : joystickInput;
+
+    player.setMovementInput(movementInput);
 
     // Clamp player position to map bounds
     _clampPlayerToMap();

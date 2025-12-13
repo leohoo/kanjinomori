@@ -25,18 +25,23 @@ enum PlayerDirection {
 /// Player component for isometric field exploration.
 ///
 /// Features:
-/// - 8-directional movement via joystick
+/// - 8-directional movement via joystick or keyboard
 /// - Smooth acceleration/deceleration
 /// - Collision detection with doors and boundaries
 /// - Dust effect when moving at max speed
+/// - Configurable isometric or cardinal movement
 class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGameReference {
   PlayerComponent({
     required Vector2 position,
+    this.useIsometricMovement = true,
   }) : super(
           position: position,
           size: Vector2(GameSizes.playerWidth, GameSizes.playerHeight),
           anchor: Anchor.bottomCenter,
         );
+
+  /// Whether to use isometric movement transformation
+  final bool useIsometricMovement;
 
   /// Current velocity
   final Vector2 velocity = Vector2.zero();
@@ -138,18 +143,25 @@ class PlayerComponent extends PositionComponent with CollisionCallbacks, HasGame
 
   void _updateVelocity(double dt) {
     if (movementInput.length > 0) {
-      // Transform joystick input to isometric screen movement
-      // This makes movement follow the diamond tile grid:
-      // - Joystick RIGHT → move down-right (along iso X axis)
-      // - Joystick DOWN → move down-left (along iso Y axis)
-      // - Joystick UP → move up-right (iso north)
-      // - Joystick LEFT → move up-left (iso west)
       final normalized = movementInput.normalized();
-      final isoX = normalized.x - normalized.y;
-      final isoY = (normalized.x + normalized.y) * 0.5;
-      final isoDirection = Vector2(isoX, isoY).normalized();
+      Vector2 targetDirection;
 
-      final targetVelocity = isoDirection * GamePhysics.playerSpeed;
+      if (useIsometricMovement) {
+        // Transform input to isometric screen movement
+        // This makes movement follow the diamond tile grid:
+        // - RIGHT → move down-right (along iso X axis)
+        // - DOWN → move down-left (along iso Y axis)
+        // - UP → move up-right (iso north)
+        // - LEFT → move up-left (iso west)
+        final isoX = normalized.x - normalized.y;
+        final isoY = (normalized.x + normalized.y) * 0.5;
+        targetDirection = Vector2(isoX, isoY).normalized();
+      } else {
+        // Cardinal movement - direct mapping
+        targetDirection = normalized;
+      }
+
+      final targetVelocity = targetDirection * GamePhysics.playerSpeed;
       final acceleration = GamePhysics.playerAcceleration * dt;
 
       velocity.x = _moveTowards(velocity.x, targetVelocity.x, acceleration);

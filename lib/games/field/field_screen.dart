@@ -1,6 +1,8 @@
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/providers.dart';
 import 'field_game.dart';
 
 /// Flutter screen wrapper for the isometric field exploration game.
@@ -16,7 +18,7 @@ import 'field_game.dart';
 /// FieldScreen(key: fieldScreenKey, ...);
 /// // Later: fieldScreenKey.currentState?.onQuestionComplete(doorIndex, true);
 /// ```
-class FieldScreen extends StatefulWidget {
+class FieldScreen extends ConsumerStatefulWidget {
   const FieldScreen({
     super.key,
     required this.stageId,
@@ -42,11 +44,11 @@ class FieldScreen extends StatefulWidget {
   final VoidCallback? onBack;
 
   @override
-  State<FieldScreen> createState() => FieldScreenState();
+  ConsumerState<FieldScreen> createState() => FieldScreenState();
 }
 
 /// Public state class to allow external access via GlobalKey.
-class FieldScreenState extends State<FieldScreen> {
+class FieldScreenState extends ConsumerState<FieldScreen> {
   late FieldGame _game;
 
   @override
@@ -56,9 +58,11 @@ class FieldScreenState extends State<FieldScreen> {
   }
 
   void _initGame() {
+    final player = ref.read(playerProvider);
     _game = FieldGame(
       onDoorEnter: _handleDoorEnter,
       completedDoors: widget.completedDoors,
+      useIsometricMovement: player.useIsometricMovement,
     );
   }
 

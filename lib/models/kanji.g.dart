@@ -1,6 +1,10 @@
-// GENERATED CODE - Hive type adapters
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'kanji.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class KanjiAdapter extends TypeAdapter<Kanji> {
   @override
@@ -17,7 +21,7 @@ class KanjiAdapter extends TypeAdapter<Kanji> {
       readings: (fields[1] as List).cast<String>(),
       meaning: fields[2] as String,
       grade: fields[3] as int,
-      strokeCount: fields[4] as int? ?? 0,
+      strokeCount: fields[4] as int,
     );
   }
 

@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../utils/constants.dart';
 import '../components/action_button.dart';
@@ -28,11 +30,11 @@ enum BattleResult {
 /// - Hitbox/hurtbox collision system
 ///
 /// Controls:
-/// - Joystick: left/right movement
-/// - Jump button: tap=normal, hold=high jump
-/// - Attack button: ground/aerial attack
-/// - Shield button: block incoming damage
-class BattleGame extends FlameGame with HasCollisionDetection {
+/// - Joystick or WASD/Arrow keys: left/right movement
+/// - Jump button or Space: tap=normal, hold=high jump
+/// - Attack button or J: ground/aerial attack
+/// - Shield button or K: block incoming damage
+class BattleGame extends FlameGame with HasCollisionDetection, KeyboardEvents {
   BattleGame({
     this.enemyName = 'Boss',
     this.difficulty = 1.0,
@@ -40,6 +42,12 @@ class BattleGame extends FlameGame with HasCollisionDetection {
     this.stageId = 1,
     this.onBattleEnd,
   });
+
+  // Keyboard state
+  final Set<LogicalKeyboardKey> _pressedKeys = {};
+  bool _wasSpacePressed = false;
+  bool _wasJPressed = false;
+  bool _wasKPressed = false;
 
   /// Enemy display name
   final String enemyName;
@@ -194,13 +202,71 @@ class BattleGame extends FlameGame with HasCollisionDetection {
   }
 
   @override
+  KeyEventResult onKeyEvent(
+    KeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
+    _pressedKeys.clear();
+    _pressedKeys.addAll(keysPressed);
+
+    // Handle action keys
+    final spacePressed = keysPressed.contains(LogicalKeyboardKey.space);
+    final jPressed = keysPressed.contains(LogicalKeyboardKey.keyJ);
+    final kPressed = keysPressed.contains(LogicalKeyboardKey.keyK);
+
+    // Space for jump (on press/release)
+    if (spacePressed && !_wasSpacePressed) {
+      _onJumpPressed();
+    } else if (!spacePressed && _wasSpacePressed) {
+      _onJumpReleased();
+    }
+
+    // J for attack (on press)
+    if (jPressed && !_wasJPressed) {
+      _onAttackPressed();
+    }
+
+    // K for shield (hold)
+    if (kPressed && !_wasKPressed) {
+      _onShieldPressed();
+    } else if (!kPressed && _wasKPressed) {
+      _onShieldReleased();
+    }
+
+    _wasSpacePressed = spacePressed;
+    _wasJPressed = jPressed;
+    _wasKPressed = kPressed;
+
+    return KeyEventResult.handled;
+  }
+
+  double _getKeyboardHorizontalInput() {
+    double x = 0;
+
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyA) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowLeft)) {
+      x -= 1;
+    }
+    if (_pressedKeys.contains(LogicalKeyboardKey.keyD) ||
+        _pressedKeys.contains(LogicalKeyboardKey.arrowRight)) {
+      x += 1;
+    }
+
+    return x;
+  }
+
+  @override
   void update(double dt) {
     if (battleEnded) return;
 
     super.update(dt);
 
-    // Update player from joystick
-    player.setHorizontalInput(joystick.directionWithDeadZone.x);
+    // Combine joystick and keyboard input (keyboard takes priority when active)
+    final joystickInput = joystick.directionWithDeadZone.x;
+    final keyboardInput = _getKeyboardHorizontalInput();
+    final horizontalInput = keyboardInput != 0 ? keyboardInput : joystickInput;
+
+    player.setHorizontalInput(horizontalInput);
 
     // Clamp positions to arena
     _clampToArena(player);
