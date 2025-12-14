@@ -31,6 +31,13 @@ class Player extends HiveObject {
   @HiveField(8)
   Map<int, int> stageHighScores; // stageId -> highest coins earned
 
+  @HiveField(9)
+  bool? _useIsometricMovement;
+
+  /// Whether to use isometric movement (default: true for backwards compatibility)
+  bool get useIsometricMovement => _useIsometricMovement ?? true;
+  set useIsometricMovement(bool value) => _useIsometricMovement = value;
+
   Player({
     this.coins = 0,
     this.currentStage = 1,
@@ -41,7 +48,9 @@ class Player extends HiveObject {
     List<String>? ownedCostumes,
     List<String>? ownedDecorations,
     Map<int, int>? stageHighScores,
-  })  : unlockedStages = unlockedStages ?? [1],
+    bool useIsometricMovement = true,
+  })  : _useIsometricMovement = useIsometricMovement,
+        unlockedStages = unlockedStages ?? [1],
         ownedWeapons = ownedWeapons ?? ['wooden_staff'],
         ownedCostumes = ownedCostumes ?? ['default'],
         ownedDecorations = ownedDecorations ?? [],

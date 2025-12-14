@@ -1,6 +1,10 @@
-// GENERATED CODE - Hive type adapters
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'player.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class PlayerAdapter extends TypeAdapter<Player> {
   @override
@@ -13,8 +17,8 @@ class PlayerAdapter extends TypeAdapter<Player> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Player(
-      coins: fields[0] as int? ?? 0,
-      currentStage: fields[1] as int? ?? 1,
+      coins: fields[0] as int,
+      currentStage: fields[1] as int,
       unlockedStages: (fields[2] as List?)?.cast<int>(),
       equippedWeapon: fields[3] as String?,
       equippedCostume: fields[4] as String?,
@@ -22,13 +26,13 @@ class PlayerAdapter extends TypeAdapter<Player> {
       ownedCostumes: (fields[6] as List?)?.cast<String>(),
       ownedDecorations: (fields[7] as List?)?.cast<String>(),
       stageHighScores: (fields[8] as Map?)?.cast<int, int>(),
-    );
+    ).._useIsometricMovement = fields[9] as bool?;
   }
 
   @override
   void write(BinaryWriter writer, Player obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.coins)
       ..writeByte(1)
@@ -46,7 +50,9 @@ class PlayerAdapter extends TypeAdapter<Player> {
       ..writeByte(7)
       ..write(obj.ownedDecorations)
       ..writeByte(8)
-      ..write(obj.stageHighScores);
+      ..write(obj.stageHighScores)
+      ..writeByte(9)
+      ..write(obj._useIsometricMovement);
   }
 
   @override

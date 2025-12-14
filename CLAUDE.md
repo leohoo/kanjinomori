@@ -11,6 +11,10 @@ flutter test
 
 Both must pass before creating a commit.
 
+## Pull Requests
+
+- Prefer squash merge for PRs
+
 ## Project Structure
 
 - `lib/` - Main application code
